@@ -1,0 +1,55 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BETTER_AUTH_SECRET: ci-only-secret-that-is-longer-than-32-characters
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      DATABASE_URL: postgresql://saasforge:saasforge@127.0.0.1:5432/saasforge
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: saasforge
+          POSTGRES_USER: saasforge
+          POSTGRES_PASSWORD: saasforge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saasforge -d saasforge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:validate
+      - run: pnpm db:generate
+      - run: pnpm db:deploy
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm --filter @saasforge/starter exec playwright install --with-deps chromium
+      - run: pnpm test:e2e

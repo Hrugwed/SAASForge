@@ -1,0 +1,261 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Better Auth canonical models. Regenerate and compare these models whenever
+// Better Auth is upgraded: pnpm dlx auth@<version> generate.
+model User {
+  id            String       @id
+  name          String
+  email         String
+  emailVerified Boolean      @default(false)
+  image         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  members       Member[]
+  invitations   Invitation[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id                   String   @id
+  expiresAt            DateTime
+  token                String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model RateLimit {
+  id          String @id
+  key         String
+  count       Int
+  lastRequest BigInt
+
+  @@unique([key])
+  @@map("rateLimit")
+}
+
+model Organization {
+  id            String         @id
+  name          String
+  slug          String
+  logo          String?
+  createdAt     DateTime
+  metadata      String?
+  members       Member[]
+  invitations   Invitation[]
+  subscriptions Subscription[]
+  entitlements  Entitlement[]
+  auditEvents   AuditEvent[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member")
+  createdAt      DateTime
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitation")
+}
+
+enum BillingProvider {
+  STRIPE
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+}
+
+model Subscription {
+  id                     String             @id @default(uuid())
+  organizationId         String
+  organization           Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider               BillingProvider
+  providerCustomerId     String?
+  providerSubscriptionId String?            @unique
+  priceId                String?
+  status                 SubscriptionStatus @default(INCOMPLETE)
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  entitlements           Entitlement[]
+
+  @@index([organizationId, status])
+  @@index([provider, providerCustomerId])
+  @@map("subscription")
+}
+
+model Entitlement {
+  id             String        @id @default(uuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  key            String
+  value          Int?
+  enabled        Boolean       @default(true)
+  expiresAt      DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([organizationId, key])
+  @@index([subscriptionId])
+  @@map("entitlement")
+}
+
+enum WebhookProcessingStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+model ProcessedWebhook {
+  id              String                  @id @default(uuid())
+  provider        BillingProvider
+  externalEventId String
+  status          WebhookProcessingStatus @default(RECEIVED)
+  payloadHash     String
+  attempts        Int                     @default(0)
+  lastError       String?
+  receivedAt      DateTime                @default(now())
+  processedAt     DateTime?
+  updatedAt       DateTime                @updatedAt
+
+  @@unique([provider, externalEventId])
+  @@index([status, receivedAt])
+  @@map("processed_webhook")
+}
+
+enum AuditActorType {
+  USER
+  SYSTEM
+  API_KEY
+}
+
+model AuditEvent {
+  id             String         @id @default(uuid())
+  organizationId String?
+  organization   Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actorType      AuditActorType
+  actorId        String?
+  action         String
+  targetType     String?
+  targetId       String?
+  metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  occurredAt     DateTime       @default(now())
+
+  @@index([organizationId, occurredAt])
+  @@index([actorId, occurredAt])
+  @@index([action, occurredAt])
+  @@map("audit_event")
+}
+
+enum WaitlistStatus {
+  WAITING
+  INVITED
+  CONVERTED
+  UNSUBSCRIBED
+}
+
+model WaitlistSubscriber {
+  id          String         @id @default(uuid())
+  email       String         @unique
+  status      WaitlistStatus @default(WAITING)
+  source      String?
+  metadata    Json?
+  consentedAt DateTime       @default(now())
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  convertedAt DateTime?
+
+  @@index([status, createdAt])
+  @@map("waitlist_subscriber")
+}
