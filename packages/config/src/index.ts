@@ -16,18 +16,3 @@ export type ProductConfig = z.infer<typeof productConfigSchema>;
 export function defineProductConfig(config: ProductConfig): ProductConfig {
   return productConfigSchema.parse(config);
 }
-
-const configuredUrl =
-  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-export const productConfig = defineProductConfig({
-  name: "SaaSForge",
-  description:
-    "A secure product platform with the design, revenue, identity, and operational foundations required to launch focused SaaS products quickly.",
-  url: configuredUrl,
-  supportEmail: "support@example.com",
-  brand: {
-    accent: "#ff5a36",
-    foreground: "#11130f",
-  },
-});

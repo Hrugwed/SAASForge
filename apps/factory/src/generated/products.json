@@ -1,0 +1,10 @@
+[
+  {
+    "name": "SignalDesk",
+    "slug": "signaldesk",
+    "description": "Turn scattered customer feedback into clear, prioritized product decisions.",
+    "modules": ["auth", "billing", "email", "analytics"],
+    "createdAt": "2026-08-09T07:07:44.384Z",
+    "status": "generated"
+  }
+]

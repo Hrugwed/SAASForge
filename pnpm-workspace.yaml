@@ -1,6 +1,8 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "products/*"
+  - "tooling/*"
 
 catalog:
   typescript: ^5.9.2

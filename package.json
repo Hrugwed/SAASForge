@@ -21,6 +21,7 @@
     "test:e2e": "turbo run test:e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "forge:create": "pnpm --filter @saasforge/forge-cli run create",
     "clean": "turbo run clean"
   },
   "devDependencies": {

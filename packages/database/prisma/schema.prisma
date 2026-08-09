@@ -141,6 +141,7 @@ enum BillingProvider {
 
 enum SubscriptionStatus {
   INCOMPLETE
+  INCOMPLETE_EXPIRED
   TRIALING
   ACTIVE
   PAST_DUE
@@ -156,11 +157,14 @@ model Subscription {
   provider               BillingProvider
   providerCustomerId     String?
   providerSubscriptionId String?            @unique
+  planKey                String?
   priceId                String?
   status                 SubscriptionStatus @default(INCOMPLETE)
   currentPeriodStart     DateTime?
   currentPeriodEnd       DateTime?
   cancelAtPeriodEnd      Boolean            @default(false)
+  providerEventCreatedAt DateTime?
+  lastSyncedAt           DateTime           @default(now())
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
   entitlements           Entitlement[]
@@ -199,6 +203,8 @@ model ProcessedWebhook {
   id              String                  @id @default(uuid())
   provider        BillingProvider
   externalEventId String
+  eventType       String
+  livemode        Boolean
   status          WebhookProcessingStatus @default(RECEIVED)
   payloadHash     String
   attempts        Int                     @default(0)

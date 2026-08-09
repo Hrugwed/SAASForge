@@ -1,0 +1,142 @@
+.modules-container {
+  max-width: 1320px;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.module-card {
+  display: grid;
+  min-height: 250px;
+  align-content: start;
+  padding: 25px;
+}
+
+.module-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.module-card-topline > span,
+.module-detail-card > p,
+.safeguard-card > p {
+  margin: 0;
+  color: var(--accent-dark);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.module-card-topline strong {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.module-card-topline strong.ready {
+  color: #1e7c40;
+}
+
+.module-card h2,
+.module-detail-card h2,
+.safeguard-card h2 {
+  margin: 28px 0 10px;
+  font-size: 26px;
+  letter-spacing: -0.05em;
+}
+
+.module-card p,
+.module-detail-card > span {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.module-link,
+.module-soon {
+  margin-top: auto;
+  padding-top: 28px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.module-link {
+  color: var(--foreground);
+}
+
+.module-link:hover {
+  color: var(--accent-dark);
+}
+
+.module-soon {
+  color: var(--muted);
+}
+
+.module-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.module-detail-card,
+.safeguard-card {
+  padding: 30px;
+}
+
+.ready-card {
+  border: 2px solid var(--ink);
+  background: var(--lime);
+  box-shadow: 7px 7px 0 var(--ink);
+}
+
+.ready-card > span {
+  color: #3d4037;
+}
+
+.safeguard-card {
+  margin-top: 16px;
+}
+
+.safeguard-card ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px 30px;
+  margin: 25px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.safeguard-card li {
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.safeguard-card li::before {
+  margin-right: 10px;
+  content: "✓";
+  color: #1e7c40;
+  font-weight: 900;
+}
+
+@media (max-width: 1050px) {
+  .module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .module-grid,
+  .module-detail-grid,
+  .safeguard-card ul {
+    grid-template-columns: 1fr;
+  }
+}

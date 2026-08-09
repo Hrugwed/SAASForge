@@ -1,0 +1,42 @@
+{
+  "name": "@products/signaldesk",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@saasforge/analytics": "workspace:*",
+    "@saasforge/auth": "workspace:*",
+    "@saasforge/billing": "workspace:*",
+    "@saasforge/config": "workspace:*",
+    "@saasforge/database": "workspace:*",
+    "@saasforge/email": "workspace:*",
+    "@saasforge/ui": "workspace:*",
+    "better-auth": "^1.6.26",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  }
+}

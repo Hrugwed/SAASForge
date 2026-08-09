@@ -7,7 +7,7 @@ This module is the reusable identity and data foundation for every SaaSForge pro
 The checked-in example contains no production credentials. Create the local app environment, start PostgreSQL, and apply migrations:
 
 ```powershell
-Copy-Item .env.example apps/starter/.env.local
+Copy-Item .env.example apps/factory/.env.local
 docker compose up -d
 pnpm db:migrate
 pnpm dev
@@ -61,4 +61,4 @@ Better Auth owns the `User`, `Session`, `Account`, `Verification`, `RateLimit`, 
 3. Add an explicit Prisma migration.
 4. Run type, unit, and end-to-end tests before deployment.
 
-Business access uses internal `Subscription` and `Entitlement` records rather than reading Stripe payloads throughout the product. `ProcessedWebhook` reserves an idempotency boundary for the billing phase, and `AuditEvent` stores security-relevant actions without retaining raw provider payloads.
+Business access in a generated product uses internal `Subscription` and `Entitlement` records rather than reading Stripe payloads throughout the product. `ProcessedWebhook` reserves an idempotency boundary for the billing phase, and `AuditEvent` stores security-relevant actions without retaining raw provider payloads. The private factory keeps its own local database and is not connected to a product's production data or Stripe account.

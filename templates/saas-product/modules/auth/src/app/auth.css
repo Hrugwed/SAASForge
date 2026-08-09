@@ -1,0 +1,88 @@
+.product-auth-page {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 1fr 1fr;
+  background: var(--product-surface);
+}
+.product-auth-page > section {
+  display: grid;
+  align-content: space-between;
+  padding: clamp(28px, 6vw, 80px);
+  background: var(--product-ink);
+  color: white;
+}
+.product-auth-page > section > a {
+  font-weight: 850;
+}
+.product-auth-page > section > p {
+  align-self: end;
+  margin: auto 0 12px;
+  color: #aaa6ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.product-auth-page h1 {
+  margin: 0;
+  font-size: clamp(44px, 7vw, 78px);
+  letter-spacing: -0.07em;
+  line-height: 0.95;
+}
+.product-auth-page > section > span {
+  margin-top: 20px;
+  color: #c9c7d8;
+}
+.product-auth-form {
+  display: grid;
+  width: min(480px, calc(100% - 48px));
+  margin: auto;
+  gap: 18px;
+}
+.product-auth-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--product-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+.product-auth-form input {
+  min-height: 48px;
+  border: 1px solid var(--product-line);
+  background: white;
+  padding: 0 14px;
+  font: inherit;
+}
+.product-auth-form button {
+  min-height: 50px;
+  border: 0;
+  background: var(--product-accent);
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+.product-auth-form p {
+  margin: 0;
+  color: var(--product-muted);
+  font-size: 13px;
+}
+.product-auth-form p a {
+  color: var(--product-accent);
+  font-weight: 800;
+}
+.product-auth-error {
+  min-height: 18px;
+  color: #aa2e2e;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .product-auth-page {
+    grid-template-columns: 1fr;
+  }
+  .product-auth-page > section {
+    min-height: 330px;
+  }
+  .product-auth-form {
+    margin-block: 60px;
+  }
+}

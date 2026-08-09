@@ -1,0 +1,86 @@
+.product-billing-page {
+  width: min(1050px, calc(100% - 48px));
+  margin: auto;
+  padding-block: 70px;
+}
+.product-billing-page header p,
+.product-billing-page article > p:first-child {
+  color: var(--product-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.product-billing-page header h1 {
+  margin: 12px 0;
+  font-size: clamp(42px, 6vw, 72px);
+  letter-spacing: -0.07em;
+}
+.product-billing-page header > span {
+  color: var(--product-muted);
+}
+.billing-setup {
+  display: grid;
+  gap: 8px;
+  margin-top: 45px;
+  border: 1px solid #d5a741;
+  background: #fff7df;
+  padding: 20px;
+}
+.billing-setup span {
+  color: var(--product-muted);
+  font-size: 13px;
+}
+.product-billing-page > section {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+.product-billing-page article {
+  display: grid;
+  min-height: 410px;
+  align-content: start;
+  border: 1px solid var(--product-line);
+  background: white;
+  padding: 30px;
+}
+.product-billing-page article h2 {
+  margin: 15px 0 8px;
+  font-size: 32px;
+}
+.billing-plan {
+  background: var(--product-ink) !important;
+  color: white;
+}
+.billing-plan > p:not(:first-child) {
+  color: #bbb9ca;
+  line-height: 1.55;
+}
+.billing-plan ul {
+  display: grid;
+  gap: 10px;
+  margin: 28px 0;
+  padding-left: 18px;
+}
+.product-billing-action {
+  display: grid;
+  gap: 7px;
+  margin-top: auto;
+}
+.product-billing-action button {
+  min-height: 48px;
+  border: 0;
+  background: var(--product-accent);
+  color: white;
+  font-weight: 800;
+}
+.product-billing-action span {
+  min-height: 17px;
+  color: #e56f6f;
+  font-size: 11px;
+}
+@media (max-width: 760px) {
+  .product-billing-page > section {
+    grid-template-columns: 1fr;
+  }
+}

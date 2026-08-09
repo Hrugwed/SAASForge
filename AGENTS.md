@@ -19,7 +19,8 @@ SaaSForge is a reusable platform for launching multiple independent SaaS product
 
 ## Architecture boundaries
 
-- `apps/starter`: the reference SaaS product and integration surface.
+- `apps/factory`: the private SaaSForge control center.
+- `templates/saas-product`: product-owned configuration examples and the future generator boundary.
 - `packages/ui`: accessible, brandable UI primitives and composed components.
 - `packages/config`: validated product and environment configuration.
 - Future service packages (`auth`, `billing`, `database`, `email`, `analytics`, `security`, `observability`) expose narrow provider adapters and must not leak vendor payloads into product code.

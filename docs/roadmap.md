@@ -2,9 +2,10 @@
 
 ## Foundation
 
-- Monorepo, starter application, design tokens, configuration validation
-- CI quality gates, dependency updates, secret scanning
-- Local development and deployment documentation
+- [x] Monorepo, private factory control center, design tokens, configuration validation
+- [x] CI quality gates, dependency updates, secret scanning
+- [x] Headless product template and rollback-safe product generator
+- [x] Local development and isolation documentation
 
 ## Identity and data
 
@@ -15,17 +16,31 @@
 
 ## Revenue
 
-- Products, prices, checkout, customer portal
-- Idempotent webhooks and internal entitlement model
-- Refund, cancellation, payment-failure, and reconciliation workflows
+- [x] Server-owned product catalog, hosted Checkout, and customer portal adapter
+- [x] Signed, idempotent webhooks and fail-closed internal entitlements
+- [x] Cancellation and payment-failure access-state synchronization
+- [x] Product generator integration that mounts billing only for a product
+- [ ] Automated reconciliation job and refund-specific product workflows
 
 ## Communication and acquisition
 
-- Transactional email templates and delivery events
-- Landing sections, pricing, waitlist, blog, SEO and analytics
+- [x] Validated transactional email boundary and starter welcome template
+- [x] Provider-neutral analytics event boundary
+- [x] Product landing page, blog, legal, robots, sitemap, and metadata foundation
+- [ ] Live Resend/PostHog credentials and product-specific event taxonomy
+- [ ] Waitlist persistence, campaign templates, and programmatic SEO tools
 
 ## Operations
 
-- Error monitoring, structured logs, audit events and uptime checks
-- Admin/support tooling, privacy export/deletion, incident runbooks
-- Restore drills, end-to-end tests and launch readiness review
+- [x] Health endpoints, audit data model, CI, and end-to-end journeys
+- [x] Independent product environment, database, billing, domain, and deployment boundaries
+- [ ] Sentry wiring, structured logs, uptime checks, and reconciliation jobs
+- [ ] Admin/support tooling, privacy export/deletion, and incident runbooks
+- [ ] Production restore drills and per-product launch readiness review
+
+## Factory v1 exit proof
+
+- [x] SignalDesk generated from the factory rather than hand-copied
+- [x] Independent branding and frontend structure
+- [x] Authentication, workspace provisioning, billing readiness, email, and analytics modules mounted
+- [x] Lint, strict type checking, unit tests, production build, and Playwright customer journey passing
