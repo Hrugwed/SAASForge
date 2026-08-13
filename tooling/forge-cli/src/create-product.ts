@@ -78,7 +78,7 @@ const packageDependencies = {
   analytics: [],
   email: [],
   database: [],
-  auth: ["database"],
+  auth: ["database", "email"],
   billing: ["database"],
   jobs: [],
   storage: [],
@@ -189,6 +189,7 @@ async function updatePackageManifest(
   if (modules.includes("auth")) {
     manifest.dependencies["@saasforge/auth"] = "workspace:*";
     manifest.dependencies["@saasforge/database"] = "workspace:*";
+    manifest.dependencies["@saasforge/email"] = "workspace:*";
     manifest.dependencies["better-auth"] = "^1.6.26";
     manifest.dependencies["server-only"] = "0.0.1";
   }
@@ -246,9 +247,9 @@ STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_DEFAULT=
 `);
   }
-  if (modules.includes("email")) {
+  if (modules.includes("auth") || modules.includes("email")) {
     sections.push(`
-# Resend transactional email; verify the sending domain before launch
+# Resend transactional and identity email; verify the sending domain before launch
 RESEND_API_KEY=
 EMAIL_FROM=Product Name <hello@example.com>
 `);
@@ -400,6 +401,7 @@ async function writeRepositoryFiles(
       "format:check": "prettier --check .",
       ...(hasDatabase
         ? {
+            postinstall: "pnpm db:generate",
             "db:generate": "pnpm --filter @saasforge/database db:generate",
             "db:deploy": "pnpm --filter @saasforge/database db:deploy",
             "db:validate": "pnpm --filter @saasforge/database db:validate",

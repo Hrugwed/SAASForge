@@ -27,15 +27,23 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       : await authClient.signIn.email({ email, password });
 
     if (result.error) {
+      const needsVerification = !isSignUp && result.error.status === 403;
       setError(
-        isSignUp
-          ? "Account creation failed. Check the details."
-          : "The email or password is incorrect.",
+        needsVerification
+          ? "Verify your email before signing in."
+          : isSignUp
+            ? "Account creation failed. Check the details."
+            : "The email or password is incorrect.",
       );
       setPending(false);
       return;
     }
-    router.replace("/dashboard");
+    const session = await authClient.getSession();
+    router.replace(
+      session.data
+        ? "/dashboard"
+        : `/check-email?email=${encodeURIComponent(email)}`,
+    );
     router.refresh();
   }
 
@@ -80,6 +88,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       <button disabled={pending} type="submit">
         {pending ? "Please wait..." : isSignUp ? "Create account" : "Sign in"}
       </button>
+      {!isSignUp ? <Link href="/forgot-password">Forgot password?</Link> : null}
       <p>
         {isSignUp ? "Already registered?" : "Need an account?"}{" "}
         <Link href={isSignUp ? "/sign-in" : "/sign-up"}>

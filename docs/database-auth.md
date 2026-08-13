@@ -38,9 +38,11 @@ Use `db:migrate` while developing a new schema migration. Use `db:deploy` in CI 
 
 ## Security model
 
-Better Auth stores opaque, HttpOnly sessions and distributed rate-limit counters in PostgreSQL. The factory enables origin checks, explicit trusted origins, secure cookies on HTTPS, tighter sign-in/sign-up limits, a 12-character password minimum, and automatic personal workspace creation with the `owner` role.
+Better Auth stores opaque, HttpOnly sessions and distributed rate-limit counters in PostgreSQL. The factory enables origin checks, explicit trusted origins, product-specific cookie prefixes, secure cookies on HTTPS, short fresh-session windows, seven-day sessions, tighter sensitive-route limits, a 12-character password minimum, and automatic personal workspace creation with the `owner` role.
 
-Email verification is deliberately not claimed as complete until the transactional email module exists. Before a production launch, connect the email adapter, require verification, and enable password-reset delivery.
+Generated identity products include Resend-backed verification, password reset, email-change confirmation, account-deletion confirmation, and organization invitation delivery. Production requires verified email; password reset revokes other sessions. Local browser tests use an explicit test-only delivery mode and cannot silently enable it in a production environment.
+
+Prisma commands load the repository's owned application environment and fail when `DATABASE_URL` is absent. There is no shared-database fallback. Generated database products run Prisma client generation during install so the first lint and type check work immediately.
 
 Authorization is separate from authentication:
 

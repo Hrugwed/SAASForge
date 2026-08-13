@@ -216,6 +216,10 @@ describe("product generator input", () => {
     expect(result.manifest.ownership.database).toBe(
       "packages/database/prisma/schema.prisma",
     );
+    const rootManifest = JSON.parse(
+      await readFile(path.join(result.target, "package.json"), "utf8"),
+    ) as { scripts: Record<string, string> };
+    expect(rootManifest.scripts.postinstall).toBe("pnpm db:generate");
   });
 
   it("removes partial output when composition fails", async () => {

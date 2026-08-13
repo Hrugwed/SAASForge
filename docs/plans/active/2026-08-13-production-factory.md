@@ -54,6 +54,9 @@ All applicable items in `docs/production-readiness.md` are checked with evidence
 - 2026-08-13: A fresh all-capability standalone repository passed setup/doctor, install, Prisma generation, formatting, lint, strict types, unit tests, and a production build before being safely removed.
 - 2026-08-13: Added always-on structured redacted logging, opt-in Sentry error/tracing configuration, liveness/readiness separation, and production-mode provider configuration checks.
 - 2026-08-13: A minimal standalone product proved the observability-only dependency closure through clean install, doctor, formatting, lint, strict types, unit tests, and a production build exposing both health and readiness routes.
+- 2026-08-13: Hardened identity with production email verification, password recovery and session revocation, email changes, verified invitations, account deletion confirmation, product-specific cookies, and sensitive-route limits.
+- 2026-08-13: Removed the Prisma shared-database fallback after a browser rehearsal exposed it; database commands now load only the owned app environment and fail closed.
+- 2026-08-13: A disposable identity product passed clean install with automatic Prisma generation, isolated migrations, full quality/build checks, and Chromium signup/protected-route/signout journeys against its own temporary database.
 
 ## Recovery
 

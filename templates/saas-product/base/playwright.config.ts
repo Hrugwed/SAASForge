@@ -14,6 +14,9 @@ export default defineConfig({
     command: "pnpm start --port 3100",
     env: {
       ...process.env,
+      APP_ENV: "test",
+      AUTH_EMAIL_MODE: "local",
+      AUTH_REQUIRE_EMAIL_VERIFICATION: "false",
       BETTER_AUTH_URL: "http://127.0.0.1:3100",
       NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3100",
     },
