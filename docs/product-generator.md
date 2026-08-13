@@ -5,7 +5,7 @@
 Run the generator from the repository root:
 
 ```bash
-pnpm forge:create -- --name "SignalDesk" --slug "signaldesk" --description "Turn scattered customer feedback into clear, prioritized product decisions." --modules "auth,billing,email,analytics"
+pnpm forge:create -- --name "My Product" --slug "my-product" --description "A clear customer outcome." --modules "auth,billing,email,analytics"
 ```
 
 Supported modules are `auth`, `billing`, `email`, and `analytics`. Billing requires authentication. The generator validates all input, prevents directory traversal and accidental replacement, composes the selected templates, and removes partial output if generation fails.
@@ -30,4 +30,4 @@ Before considering a generated product ready for feature work:
 4. If billing is selected, configure a Stripe sandbox Price and webhook and test success, cancellation, and failed-payment states.
 5. Replace placeholder legal copy and support email before any public launch.
 
-SignalDesk under `products/signaldesk` is the factory's executable proof product. It may be deleted or replaced later; the reusable source of truth remains the generator, templates, and shared packages.
+Generated validation products are disposable. The reusable source of truth is the generator, templates, capability contracts, tests, and documentation. Product-specific database models must never be added to the factory's shared schema.

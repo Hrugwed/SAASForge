@@ -38,9 +38,10 @@
 - [ ] Admin/support tooling, privacy export/deletion, and incident runbooks
 - [ ] Production restore drills and per-product launch readiness review
 
-## Factory v1 exit proof
+## Factory exit proof
 
-- [x] SignalDesk generated from the factory rather than hand-copied
-- [x] Independent branding and frontend structure
-- [x] Authentication, workspace provisioning, billing readiness, email, and analytics modules mounted
-- [x] Lint, strict type checking, unit tests, production build, and Playwright customer journey passing
+- [ ] Generate two disposable validation products from clean clones
+- [ ] Prove independent product schemas, secrets, providers, and deployments
+- [ ] Prove authentication, workspace provisioning, billing, email, analytics, jobs, and storage modules
+- [ ] Pass lint, strict type checking, unit/integration tests, production builds, and Playwright journeys
+- [ ] Record setup time, manual steps, agent context used, and recovery drill results

@@ -4,6 +4,17 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import products from "@/generated/products.json";
 import "./products.css";
 
+type ProductRegistryItem = {
+  name: string;
+  slug: string;
+  description: string;
+  modules: string[];
+  createdAt: string;
+  status: string;
+};
+
+const productRegistry: ProductRegistryItem[] = products;
+
 export const metadata = {
   title: "Products",
   robots: { index: false, follow: false },
@@ -29,7 +40,7 @@ export default function ProductsPage() {
         </div>
       </header>
 
-      {products.length === 0 ? (
+      {productRegistry.length === 0 ? (
         <Card className="product-registry-empty">
           <span>NO PRODUCTS YET</span>
           <h2>The generator is ready for its first validated idea.</h2>
@@ -43,7 +54,7 @@ export default function ProductsPage() {
           className="product-registry-grid"
           aria-label="Generated products"
         >
-          {products.map((product) => (
+          {productRegistry.map((product) => (
             <Card className="product-registry-card" key={product.slug}>
               <div>
                 <span>{product.status}</span>

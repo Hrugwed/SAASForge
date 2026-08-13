@@ -1,10 +1,10 @@
 # SaaSForge
 
-SaaSForge is a private, secure foundation for repeatedly launching SaaS products without rebuilding authentication, billing, email, analytics, design, and operations each time. It is our internal factory, not a product for sale.
+SaaSForge is an AI-native, production-oriented foundation for repeatedly launching independent SaaS products without rebuilding authentication, billing, email, analytics, design, and operations each time.
 
 ## Status
 
-Factory v1 is operational. It has a private control center, a safe product generator, reusable capability packages, selectable product modules, and an independently generated proof product called SignalDesk.
+SaaSForge is under active hardening. The existing foundation is usable for development, but the public, production-ready factory exit criteria in `docs/production-readiness.md` are not yet complete.
 
 ## Structure
 
@@ -19,8 +19,7 @@ packages/
   database/         Prisma schema, migrations, and PostgreSQL client
   email/            Validated transactional delivery boundary and templates
   ui/               Shared design system
-products/
-  signaldesk/       Generated verification product with an independent design
+products/           Local generated products; intentionally empty in source
 templates/
   saas-product/     Base product and selectable module overlays
 tooling/
@@ -48,7 +47,7 @@ pnpm build
 pnpm test:e2e
 ```
 
-The factory contains the private application shell, design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, security headers, health endpoints, and automated quality pipeline. Customer-facing Checkout, pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
+The factory contains the control center, design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, security headers, health endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
 
 ## Principles
 
