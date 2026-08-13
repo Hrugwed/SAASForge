@@ -48,7 +48,12 @@ async function createRepositoryFixture(packageJson: string) {
   await writeFile(path.join(temporaryRoot, "turbo.json"), "{}\n", "utf8");
   const documentation = path.join(temporaryRoot, "docs");
   await mkdir(documentation, { recursive: true });
-  for (const document of ["billing.md", "database-auth.md", "jobs.md"]) {
+  for (const document of [
+    "billing.md",
+    "database-auth.md",
+    "jobs.md",
+    "storage.md",
+  ]) {
     await writeFile(
       path.join(documentation, document),
       `# ${document}\n`,

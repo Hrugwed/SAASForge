@@ -90,6 +90,7 @@ const capabilityDocumentation = {
   auth: "database-auth.md",
   billing: "billing.md",
   jobs: "jobs.md",
+  storage: "storage.md",
 } as const;
 
 type FactoryPackage = keyof typeof packageDependencies;

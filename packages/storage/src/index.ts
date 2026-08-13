@@ -48,6 +48,24 @@ export interface StorageProvider {
   delete(input: Omit<ObjectRequest, "expiresInSeconds">): Promise<void>;
 }
 
+export type StoragePolicy = {
+  allowedContentTypes: ReadonlySet<string>;
+  maximumUploadBytes: number;
+};
+
+const defaultStoragePolicy: StoragePolicy = {
+  allowedContentTypes: new Set([
+    "application/pdf",
+    "image/gif",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "text/csv",
+    "text/plain",
+  ]),
+  maximumUploadBytes: 10 * 1024 * 1024,
+};
+
 function safeFileName(fileName: string): string {
   const normalized = fileName
     .normalize("NFKC")
@@ -63,10 +81,26 @@ function assertTenantKey(organizationId: string, key: string): void {
   }
 }
 
-export function createStorage(provider: StorageProvider) {
+export function createStorage(
+  provider: StorageProvider,
+  policy: StoragePolicy = defaultStoragePolicy,
+) {
+  if (
+    !Number.isSafeInteger(policy.maximumUploadBytes) ||
+    policy.maximumUploadBytes < 1 ||
+    policy.maximumUploadBytes > 25 * 1024 * 1024
+  ) {
+    throw new Error("Storage maximumUploadBytes must be between 1 and 25 MiB.");
+  }
   return {
     async createUpload(input: z.input<typeof uploadRequestSchema>) {
       const validated = uploadRequestSchema.parse(input);
+      if (!policy.allowedContentTypes.has(validated.contentType)) {
+        throw new Error("This file type is not allowed by the storage policy.");
+      }
+      if (validated.contentLength > policy.maximumUploadBytes) {
+        throw new Error("This file exceeds the storage policy size limit.");
+      }
       const key = `organizations/${validated.organizationId}/${randomUUID()}-${safeFileName(validated.fileName)}`;
       const signed = await provider.signUpload({ ...validated, key });
       return { key, ...signed, expiresInSeconds: validated.expiresInSeconds };
