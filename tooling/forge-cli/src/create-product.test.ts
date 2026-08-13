@@ -46,6 +46,15 @@ async function createRepositoryFixture(packageJson: string) {
     "utf8",
   );
   await writeFile(path.join(temporaryRoot, "turbo.json"), "{}\n", "utf8");
+  const documentation = path.join(temporaryRoot, "docs");
+  await mkdir(documentation, { recursive: true });
+  for (const document of ["billing.md", "database-auth.md", "jobs.md"]) {
+    await writeFile(
+      path.join(documentation, document),
+      `# ${document}\n`,
+      "utf8",
+    );
+  }
   const securityTooling = path.join(temporaryRoot, "tooling", "security");
   await mkdir(securityTooling, { recursive: true });
   await writeFile(
@@ -285,6 +294,9 @@ describe("product generator input", () => {
     await expect(
       readFile(path.join(result.target, "vercel.json"), "utf8"),
     ).resolves.toContain("/api/internal/billing/reconcile");
+    await expect(
+      stat(path.join(result.target, "docs", "capabilities", "billing.md")),
+    ).resolves.toBeDefined();
   });
 
   it("removes partial output when composition fails", async () => {

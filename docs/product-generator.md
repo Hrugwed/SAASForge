@@ -32,5 +32,6 @@ Before considering a generated product ready for feature work:
 4. If billing is selected, configure a Stripe sandbox Price and webhook and test success, cancellation, and failed-payment states.
 5. Replace placeholder legal copy and support email before any public launch.
 6. Follow `docs/deployment.md`, protect the GitHub `production` environment, and exercise the rollback and restore runbooks.
+7. When jobs are enabled, replace the example task body, configure a product-owned Inngest app, and exercise success, retry, terminal failure, replay, and backlog alerts.
 
 Generated validation products are disposable. The reusable source of truth is the generator, templates, capability contracts, tests, and documentation. Product-specific database models must never be added to the factory's shared schema.

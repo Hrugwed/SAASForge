@@ -86,6 +86,12 @@ const packageDependencies = {
   storage: [],
 } as const;
 
+const capabilityDocumentation = {
+  auth: "database-auth.md",
+  billing: "billing.md",
+  jobs: "jobs.md",
+} as const;
+
 type FactoryPackage = keyof typeof packageDependencies;
 
 function assertInside(parent: string, target: string): void {
@@ -640,6 +646,19 @@ export async function createProduct(
       path.join(repositoryRoot, "tooling", "security", "license-check.mjs"),
       path.join(target, "tooling", "security", "license-check.mjs"),
     );
+    for (const moduleName of input.modules) {
+      const document =
+        capabilityDocumentation[
+          moduleName as keyof typeof capabilityDocumentation
+        ];
+      if (!document) continue;
+      const documentationTarget = path.join(target, "docs", "capabilities");
+      await mkdir(documentationTarget, { recursive: true });
+      await cp(
+        path.join(repositoryRoot, "docs", document),
+        path.join(documentationTarget, document),
+      );
+    }
 
     const modules = new Set(input.modules);
     await replaceTokens(appTarget, {
