@@ -32,6 +32,8 @@ Subscribe each product's production endpoint `/api/billing/webhook` to:
 
 The route verifies `Stripe-Signature` against the exact raw body, caps request size, records a payload hash, and processes each Stripe event ID once. Failed or abandoned claims can be retried. Because Stripe does not guarantee event order, synchronization retrieves the current Subscription from Stripe before writing local state.
 
+Generated billing products also register a daily production reconciliation request at `/api/internal/billing/reconcile`, which remains compatible with Vercel's free Hobby schedule. Vercel sends the product-owned `CRON_SECRET` as a bearer credential. The task retrieves live Stripe state for the stalest subscriptions, records failures in the audit trail, and returns a failing status when any record could not be synchronized so monitoring can alert. It is a repair loop, not a substitute for webhooks; increase the cadence after moving to a plan that supports it and as billing volume demands.
+
 ## Access rules
 
 - `trialing` and `active` subscriptions receive the configured entitlements.
@@ -49,4 +51,5 @@ Each product defines its own plans, public copy, and entitlement map together. T
 3. Create an HTTPS webhook endpoint in Stripe Workbench and copy that endpoint's unique signing secret into the production environment only.
 4. Put secrets in the deployment provider's encrypted environment storage. Keep production credentials out of preview deployments.
 5. Exercise successful payment, failed renewal, cancellation-at-period-end, cancellation, duplicate delivery, and invalid-signature cases before launch.
-6. Monitor failed webhook deliveries and audit `processed_webhook` failures. Add scheduled reconciliation before billing volume makes missed events operationally significant.
+6. Set a random `CRON_SECRET`, monitor failed webhook deliveries and reconciliation responses, and alert on `processed_webhook` or `billing.reconciliation.failed` records.
+7. Exercise trial start/end, upgrade, downgrade, cancellation-at-period-end, immediate cancellation, renewal failure/grace expiry, refund policy, duplicate/reordered delivery, and reconciliation before launch. Stripe refunds do not automatically define product access; document whether your product cancels access or lets the subscription continue, then configure that behavior in Stripe and verify the resulting subscription state.

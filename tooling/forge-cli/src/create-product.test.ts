@@ -282,6 +282,9 @@ describe("product generator input", () => {
         "utf8",
       ),
     ).resolves.toContain("pnpm db:deploy");
+    await expect(
+      readFile(path.join(result.target, "vercel.json"), "utf8"),
+    ).resolves.toContain("/api/internal/billing/reconcile");
   });
 
   it("removes partial output when composition fails", async () => {

@@ -287,6 +287,7 @@ BETTER_AUTH_URL=http://localhost:3100
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_DEFAULT=
+CRON_SECRET=replace-with-at-least-32-random-characters
 `);
   }
   if (modules.includes("auth") || modules.includes("email")) {
@@ -347,6 +348,7 @@ async function writeReadinessRoute(
       "STRIPE_SECRET_KEY",
       "STRIPE_WEBHOOK_SECRET",
       "STRIPE_PRICE_DEFAULT",
+      "CRON_SECRET",
     );
   }
   if (modules.includes("email")) {
@@ -512,6 +514,29 @@ async function writeRepositoryFiles(
   await writeFile(path.join(target, "CLAUDE.md"), "@AGENTS.md\n");
 }
 
+async function updateDeploymentConfiguration(
+  target: string,
+  modules: CreateProductInput["modules"],
+): Promise<void> {
+  const configurationPath = path.join(target, "vercel.json");
+  const configuration = JSON.parse(
+    await readFile(configurationPath, "utf8"),
+  ) as Record<string, unknown>;
+  if (modules.includes("billing")) {
+    configuration.crons = [
+      {
+        path: "/api/internal/billing/reconcile",
+        schedule: "17 3 * * *",
+      },
+    ];
+  }
+  await writeFile(
+    configurationPath,
+    `${JSON.stringify(configuration, null, 2)}\n`,
+    "utf8",
+  );
+}
+
 async function updateRegistry(
   root: string,
   entry: ProductRegistryEntry,
@@ -651,6 +676,7 @@ export async function createProduct(
       packages,
       generatedAt,
     );
+    await updateDeploymentConfiguration(target, input.modules);
     await replaceTokens(target, {
       __PRODUCT_NAME__: input.name,
       __PRODUCT_SLUG__: input.slug,

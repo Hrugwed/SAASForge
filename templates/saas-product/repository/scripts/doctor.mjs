@@ -118,6 +118,7 @@ if (!(await exists(manifestPath))) {
         required.add("STRIPE_SECRET_KEY");
         required.add("STRIPE_WEBHOOK_SECRET");
         required.add("STRIPE_PRICE_DEFAULT");
+        required.add("CRON_SECRET");
       }
       if (modules.has("email")) {
         required.add("RESEND_API_KEY");

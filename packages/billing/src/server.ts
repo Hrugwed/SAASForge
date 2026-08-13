@@ -40,6 +40,8 @@ type CheckoutInput = {
   userId: string;
 };
 
+type BillingSyncEvent = { created: number; id: string; type: string };
+
 function requiredStripeSecret(value: string | undefined, name: string): string {
   if (!value) {
     throw new BillingConfigurationError(`${name} is required.`);
@@ -303,6 +305,53 @@ export class StripeBillingService {
     }
   }
 
+  async reconcileSubscriptions(
+    limit = 100,
+  ): Promise<{ checked: number; failed: number; synchronized: number }> {
+    const batchSize = Math.max(1, Math.min(limit, 100));
+    const subscriptions = await this.options.database.subscription.findMany({
+      where: {
+        provider: "STRIPE",
+        providerSubscriptionId: { not: null },
+      },
+      orderBy: { lastSyncedAt: "asc" },
+      take: batchSize,
+      select: { organizationId: true, providerSubscriptionId: true },
+    });
+    let failed = 0;
+    let synchronized = 0;
+
+    for (const record of subscriptions) {
+      if (!record.providerSubscriptionId) continue;
+      try {
+        const subscription = await this.options.stripe.subscriptions.retrieve(
+          record.providerSubscriptionId,
+          { expand: ["items.data.price.product"] },
+        );
+        await this.syncSubscription(subscription, {
+          id: `reconcile:${record.providerSubscriptionId}:${Date.now()}`,
+          type: "billing.reconciliation",
+          created: Math.floor(Date.now() / 1000),
+        });
+        synchronized += 1;
+      } catch (error) {
+        failed += 1;
+        await this.options.database.auditEvent.create({
+          data: {
+            organizationId: record.organizationId,
+            actorType: "SYSTEM",
+            action: "billing.reconciliation.failed",
+            targetType: "stripe_subscription",
+            targetId: record.providerSubscriptionId,
+            metadata: { error: safeErrorMessage(error) },
+          },
+        });
+      }
+    }
+
+    return { checked: subscriptions.length, failed, synchronized };
+  }
+
   private requirePurchasablePlan(planKey: string): BillingPlan & {
     stripePriceId: string;
   } {
@@ -374,7 +423,7 @@ export class StripeBillingService {
 
   private async syncSubscription(
     stripeSubscription: Stripe.Subscription,
-    event: Stripe.Event,
+    event: BillingSyncEvent,
   ): Promise<void> {
     const existing = await this.options.database.subscription.findUnique({
       where: { providerSubscriptionId: stripeSubscription.id },
