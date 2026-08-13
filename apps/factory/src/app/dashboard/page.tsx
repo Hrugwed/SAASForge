@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   const session = await requireSession();
   const firstName = session.user.name.trim().split(/\s+/)[0] || "maker";
   const metrics = [
-    { label: "Factory modules", value: "5", change: "Reusable foundations" },
+    { label: "Factory modules", value: "8", change: "Reusable foundations" },
     {
       label: "Generated products",
       value: String(products.length),
@@ -65,7 +65,7 @@ export default async function DashboardPage() {
               <p>LAUNCH READINESS</p>
               <h2>Factory setup</h2>
             </div>
-            <span>5 / 8</span>
+            <span>8 / 8</span>
           </div>
           <div className="setup-list">
             {[
@@ -74,9 +74,9 @@ export default async function DashboardPage() {
               ["Database foundation", "complete"],
               ["Authentication module", "complete"],
               ["Billing engine", "complete"],
-              ["Product generator", "next"],
-              ["Email", "planned"],
-              ["Analytics", "planned"],
+              ["Product generator", "complete"],
+              ["Email", "complete"],
+              ["Analytics", "complete"],
             ].map(([label, status]) => (
               <div className="setup-row" key={label}>
                 <span className={`setup-indicator ${status}`} />
@@ -98,8 +98,9 @@ export default async function DashboardPage() {
             <span>SF</span>
             <strong>Private factory foundation online</strong>
             <p>
-              Signed in as {session.user.email}. The next step is to generate
-              your first product from the maintained template.
+              Signed in as {session.user.email}. The next step is to generate a
+              disposable product from the maintained template and complete its
+              provider-specific launch review.
             </p>
           </div>
         </Card>

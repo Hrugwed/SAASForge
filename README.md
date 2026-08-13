@@ -4,7 +4,7 @@ SaaSForge is an AI-native, production-oriented foundation for repeatedly launchi
 
 ## Status
 
-SaaSForge is under active hardening. The existing foundation is usable for development, but the public, production-ready factory exit criteria in `docs/production-readiness.md` are not yet complete.
+SaaSForge's reusable engineering foundation is implemented and validated locally. A generated product is not automatically production-ready: its provider accounts, legal decisions, domain verification, restore drill, alerts, product-specific tests, and launch review remain the product owner's responsibility. Track those gates in `docs/production-readiness.md`.
 
 ## Structure
 
@@ -31,8 +31,13 @@ docs/
   architecture.md   Architecture decisions and boundaries
   billing.md        Stripe sandbox, webhook, and production setup
   database-auth.md  Local and production identity/data setup
+  deployment.md     Generated-repository release and operations model
+  email.md          Transactional delivery and observability decisions
+  jobs.md           Durable background-work patterns
+  storage.md        Private tenant object-storage controls
   product-generator.md Product creation and isolation playbook
   roadmap.md        Phased implementation plan
+  validation/       Reproducible factory release evidence
 ```
 
 ## Commands
