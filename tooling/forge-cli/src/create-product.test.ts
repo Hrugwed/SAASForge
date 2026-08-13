@@ -41,6 +41,19 @@ async function createRepositoryFixture(packageJson: string) {
     "utf8",
   );
   await writeFile(path.join(temporaryRoot, "turbo.json"), "{}\n", "utf8");
+  const scripts = path.join(
+    temporaryRoot,
+    "templates",
+    "saas-product",
+    "repository",
+    "scripts",
+  );
+  await mkdir(scripts, { recursive: true });
+  await writeFile(
+    path.join(scripts, "doctor.mjs"),
+    "console.log('doctor');\n",
+    "utf8",
+  );
   for (const packageName of [
     "analytics",
     "auth",
@@ -117,6 +130,9 @@ describe("product generator input", () => {
         "utf8",
       ),
     ).resolves.toContain("@saasforge/config");
+    await expect(
+      stat(path.join(result.target, "scripts", "doctor.mjs")),
+    ).resolves.toBeDefined();
     await expect(
       readFile(
         path.join(root, "apps", "factory", "src", "generated", "products.json"),

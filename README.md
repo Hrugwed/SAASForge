@@ -36,6 +36,8 @@ docs/
 
 ```bash
 pnpm install
+pnpm factory:setup
+pnpm factory:doctor
 docker compose up -d
 pnpm db:migrate
 pnpm forge:create -- --name "My Product" --slug "my-product" --description "A clear customer outcome described here." --modules "auth,billing,email,analytics"
@@ -46,6 +48,8 @@ pnpm test
 pnpm build
 pnpm test:e2e
 ```
+
+`factory:setup` creates only an ignored local environment and never overwrites an existing one. `factory:doctor` validates prerequisites and configuration without printing secret values. Generated repositories provide their own `pnpm setup` and `pnpm doctor` commands.
 
 The factory contains the control center, design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, security headers, health endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
 

@@ -22,6 +22,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "forge:create": "pnpm --filter @saasforge/forge-cli run create",
+    "factory:doctor": "pnpm --filter @saasforge/forge-cli run doctor",
+    "factory:setup": "pnpm --filter @saasforge/forge-cli run setup",
     "clean": "turbo run clean"
   },
   "devDependencies": {

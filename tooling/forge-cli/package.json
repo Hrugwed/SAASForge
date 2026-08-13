@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "create": "tsx src/cli.ts",
+    "doctor": "tsx src/doctor-cli.ts",
+    "setup": "tsx src/setup-cli.ts",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

@@ -123,9 +123,16 @@ async function formatGeneratedFiles(directory: string): Promise<void> {
       continue;
     }
     if (
-      ![".ts", ".tsx", ".json", ".md", ".css", ".yaml", ".yml"].includes(
-        path.extname(entry.name),
-      )
+      ![
+        ".ts",
+        ".tsx",
+        ".mjs",
+        ".json",
+        ".md",
+        ".css",
+        ".yaml",
+        ".yml",
+      ].includes(path.extname(entry.name))
     )
       continue;
     const source = await readFile(target, "utf8");
@@ -235,6 +242,8 @@ async function writeRepositoryFiles(
     scripts: {
       build: "turbo run build",
       dev: "turbo run dev",
+      doctor: "node scripts/doctor.mjs",
+      setup: "node scripts/setup.mjs",
       lint: "turbo run lint",
       typecheck: "turbo run typecheck",
       test: "turbo run test",
@@ -368,6 +377,13 @@ export async function createProduct(
   await mkdir(productsRoot, { recursive: true });
   try {
     await mkdir(path.dirname(appTarget), { recursive: true });
+    const repositoryTemplate = path.join(templateRoot, "repository");
+    if (await exists(repositoryTemplate)) {
+      await cp(repositoryTemplate, target, {
+        recursive: true,
+        errorOnExist: true,
+      });
+    }
     await cp(path.join(templateRoot, "base"), appTarget, {
       recursive: true,
       errorOnExist: true,
