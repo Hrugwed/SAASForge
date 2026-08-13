@@ -1,0 +1,60 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      APP_ENV: test
+      AUTH_EMAIL_MODE: local
+      AUTH_REQUIRE_EMAIL_VERIFICATION: "false"
+      BETTER_AUTH_SECRET: ci-only-secret-that-is-longer-than-32-characters
+      BETTER_AUTH_URL: http://127.0.0.1:3100
+      DATABASE_URL: postgresql://product:product@127.0.0.1:5432/product
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: product
+          POSTGRES_USER: product
+          POSTGRES_PASSWORD: product
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U product -d product"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@f520eceda224fe1a4aed5a2a27a194379a409996 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run --if-present db:validate
+      - run: pnpm run --if-present db:deploy
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm license:check
+      - run: pnpm build
+      - run: pnpm --filter "@products/*" exec playwright install --with-deps chromium
+      - run: pnpm test:e2e

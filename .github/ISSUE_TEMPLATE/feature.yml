@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a factory capability backed by a real product need.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Product or operator problem
+      description: Describe the repeated need and why product-local code is insufficient.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Proposed boundary
+      description: Explain provider, security, maintenance, compatibility, and exit-strategy implications.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link or describe products that need this capability without sharing private data.
+    validations:
+      required: true

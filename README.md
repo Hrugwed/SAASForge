@@ -48,6 +48,7 @@ pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm license:check
 pnpm build
 pnpm test:e2e
 ```
@@ -55,6 +56,10 @@ pnpm test:e2e
 `factory:setup` creates only an ignored local environment and never overwrites an existing one. `factory:doctor` validates prerequisites and configuration without printing secret values. Generated repositories provide their own `pnpm product:setup` and `pnpm product:doctor` commands.
 
 The factory contains the control center, design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, structured logs, Sentry wiring, security headers, health/readiness endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
+
+## Security and contribution
+
+Read `SECURITY.md` before reporting a vulnerability and `CONTRIBUTING.md` before proposing a broad capability. This repository is MIT licensed. Generated products remain private and unlicensed by default so each product owner makes an explicit licensing decision.
 
 ## Principles
 

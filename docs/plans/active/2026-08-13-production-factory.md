@@ -57,6 +57,9 @@ All applicable items in `docs/production-readiness.md` are checked with evidence
 - 2026-08-13: Hardened identity with production email verification, password recovery and session revocation, email changes, verified invitations, account deletion confirmation, product-specific cookies, and sensitive-route limits.
 - 2026-08-13: Removed the Prisma shared-database fallback after a browser rehearsal exposed it; database commands now load only the owned app environment and fail closed.
 - 2026-08-13: A disposable identity product passed clean install with automatic Prisma generation, isolated migrations, full quality/build checks, and Chromium signup/protected-route/signout journeys against its own temporary database.
+- 2026-08-13: Added MIT licensing, contribution/conduct/security policies, ownership, issue/PR templates, changelog, and a release process for the public repository.
+- 2026-08-13: Added least-privilege, commit-pinned CI for CodeQL, secret scanning, high-severity dependency audit, and an explicit production-license allowlist; generated repositories inherit equivalent gates.
+- 2026-08-13: Pinned the supported Node runtime and taught generated repositories to carry the same runtime and license policy.
 
 ## Recovery
 

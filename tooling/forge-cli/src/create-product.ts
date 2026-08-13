@@ -387,7 +387,7 @@ async function writeRepositoryFiles(
     version: "0.1.0",
     private: true,
     packageManager: "pnpm@10.28.2",
-    engines: { node: ">=22.14.0" },
+    engines: { node: ">=22.14.0 <23" },
     scripts: {
       build: "turbo run build",
       dev: "turbo run dev",
@@ -399,6 +399,7 @@ async function writeRepositoryFiles(
       "test:e2e": "turbo run test:e2e",
       format: "prettier --write .",
       "format:check": "prettier --check .",
+      "license:check": "node tooling/security/license-check.mjs",
       ...(hasDatabase
         ? {
             postinstall: "pnpm db:generate",
@@ -450,6 +451,7 @@ async function writeRepositoryFiles(
     path.join(target, "pnpm-workspace.yaml"),
     'packages:\n  - "apps/*"\n  - "packages/*"\n',
   );
+  await writeFile(path.join(target, ".nvmrc"), "22.14.0\n");
   await writeFile(
     path.join(target, ".gitignore"),
     "node_modules/\n.pnpm-store/\n.next/\ndist/\ncoverage/\n.turbo/\nplaywright-report/\ntest-results/\n.env\n.env.*\n!.env.example\n*.tsbuildinfo\npackages/database/src/generated/\n",
@@ -562,6 +564,11 @@ export async function createProduct(
     await cp(
       path.join(repositoryRoot, "turbo.json"),
       path.join(target, "turbo.json"),
+    );
+    await mkdir(path.join(target, "tooling", "security"), { recursive: true });
+    await cp(
+      path.join(repositoryRoot, "tooling", "security", "license-check.mjs"),
+      path.join(target, "tooling", "security", "license-check.mjs"),
     );
 
     const modules = new Set(input.modules);

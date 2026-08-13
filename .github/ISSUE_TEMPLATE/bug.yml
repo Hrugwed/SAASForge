@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a reproducible factory or generated-product defect.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not report security vulnerabilities here; use the private process in SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: SaaSForge version or commit
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        [
+          Factory,
+          Generator,
+          Generated product,
+          Authentication,
+          Billing,
+          Provider adapter,
+          CI and tooling,
+          Documentation,
+        ]
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include commands, expected behavior, actual behavior, and a minimal safe example.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node/pnpm versions, selected modules, and provider modes. Remove secrets.
+    validations:
+      required: true

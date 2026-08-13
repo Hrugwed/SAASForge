@@ -46,6 +46,13 @@ async function createRepositoryFixture(packageJson: string) {
     "utf8",
   );
   await writeFile(path.join(temporaryRoot, "turbo.json"), "{}\n", "utf8");
+  const securityTooling = path.join(temporaryRoot, "tooling", "security");
+  await mkdir(securityTooling, { recursive: true });
+  await writeFile(
+    path.join(securityTooling, "license-check.mjs"),
+    "console.log('licenses');\n",
+    "utf8",
+  );
   const scripts = path.join(
     temporaryRoot,
     "templates",

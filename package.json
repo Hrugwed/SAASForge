@@ -5,7 +5,7 @@
   "description": "A secure, reusable factory for launching and operating SaaS products.",
   "packageManager": "pnpm@10.28.2",
   "engines": {
-    "node": ">=22.14.0"
+    "node": ">=22.14.0 <23"
   },
   "scripts": {
     "build": "turbo run build",
@@ -21,6 +21,7 @@
     "test:e2e": "turbo run test:e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "license:check": "node tooling/security/license-check.mjs",
     "forge:create": "pnpm --filter @saasforge/forge-cli run create",
     "factory:doctor": "pnpm --filter @saasforge/forge-cli run doctor",
     "factory:setup": "pnpm --filter @saasforge/forge-cli run setup",
