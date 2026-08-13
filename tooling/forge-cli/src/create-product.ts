@@ -119,7 +119,17 @@ async function replaceTokens(
 
     const extension = path.extname(entry.name);
     if (
-      ![".ts", ".tsx", ".json", ".md", ".css", ".example"].includes(extension)
+      ![
+        ".ts",
+        ".tsx",
+        ".mjs",
+        ".json",
+        ".md",
+        ".css",
+        ".example",
+        ".yaml",
+        ".yml",
+      ].includes(extension)
     )
       continue;
 
@@ -413,6 +423,7 @@ async function writeRepositoryFiles(
       prettier: "^3.6.2",
       turbo: "^2.5.6",
       typescript: "^5.9.2",
+      vercel: "58.11.0",
     },
     pnpm: {
       onlyBuiltDependencies: [
@@ -606,6 +617,17 @@ export async function createProduct(
       packages,
       generatedAt,
     );
+    await replaceTokens(target, {
+      __PRODUCT_NAME__: input.name,
+      __PRODUCT_SLUG__: input.slug,
+      __PRODUCT_DESCRIPTION__: input.description,
+      "      # __DATABASE_QUALITY_STEPS__": packages.includes("database")
+        ? "      - run: pnpm db:validate\n      - run: pnpm db:generate\n      - run: pnpm db:deploy"
+        : "",
+      "      # __DATABASE_DEPLOY_STEP__": packages.includes("database")
+        ? "      - run: pnpm db:deploy"
+        : "",
+    });
     await formatGeneratedFiles(target);
 
     const manifest = JSON.parse(

@@ -10,7 +10,7 @@ pnpm forge:create -- --name "My Product" --slug "my-product" --description "A cl
 
 Supported modules are `auth`, `billing`, `email`, `analytics`, `jobs`, and `storage`. Billing, jobs, and storage require authentication so tenant ownership is established. The generator validates all input, resolves package dependency closure, prevents directory traversal and accidental replacement, composes the selected templates, and removes partial output if generation fails.
 
-The output under `products/<slug>` is a self-contained repository, not a package in the factory workspace. It contains `apps/web`, only the selected reusable capability packages and their dependency closure, root quality tooling, safe `setup` and `doctor` commands, its own database schema and migrations when data capabilities are enabled, agent instructions, and `saasforge.manifest.json`. Move that directory to its own Git repository when product work begins.
+The output under `products/<slug>` is a self-contained repository, not a package in the factory workspace. It contains `apps/web`, only the selected reusable capability packages and their dependency closure, root quality tooling, safe `setup` and `doctor` commands, its own database schema and migrations when data capabilities are enabled, product-specific GitHub quality/security/release workflows, Vercel configuration, operations runbooks, agent instructions, and `saasforge.manifest.json`. Move that directory to its own Git repository when product work begins.
 
 ## What the product owns
 
@@ -31,5 +31,6 @@ Before considering a generated product ready for feature work:
 3. Run the Playwright journey and verify signup, protected access, workspace creation, and sign-out.
 4. If billing is selected, configure a Stripe sandbox Price and webhook and test success, cancellation, and failed-payment states.
 5. Replace placeholder legal copy and support email before any public launch.
+6. Follow `docs/deployment.md`, protect the GitHub `production` environment, and exercise the rollback and restore runbooks.
 
 Generated validation products are disposable. The reusable source of truth is the generator, templates, capability contracts, tests, and documentation. Product-specific database models must never be added to the factory's shared schema.

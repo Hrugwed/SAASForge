@@ -66,6 +66,34 @@ async function createRepositoryFixture(packageJson: string) {
     "console.log('doctor');\n",
     "utf8",
   );
+  const repositoryTemplate = path.join(
+    temporaryRoot,
+    "templates",
+    "saas-product",
+    "repository",
+  );
+  const workflows = path.join(repositoryTemplate, ".github", "workflows");
+  const runbooks = path.join(repositoryTemplate, "docs", "runbooks");
+  await mkdir(workflows, { recursive: true });
+  await mkdir(runbooks, { recursive: true });
+  await writeFile(
+    path.join(repositoryTemplate, "vercel.json"),
+    JSON.stringify({
+      buildCommand: "pnpm --filter @products/__PRODUCT_SLUG__ build",
+    }),
+    "utf8",
+  );
+  await writeFile(
+    path.join(workflows, "quality.yml"),
+    "jobs:\n  verify:\n    steps:\n      # __DATABASE_QUALITY_STEPS__\n",
+    "utf8",
+  );
+  await writeFile(
+    path.join(workflows, "deploy-production.yml"),
+    "jobs:\n  release:\n    steps:\n      # __DATABASE_DEPLOY_STEP__\n",
+    "utf8",
+  );
+  await writeFile(path.join(runbooks, "rollback.md"), "# Rollback\n", "utf8");
   for (const packageName of [
     "analytics",
     "auth",
@@ -182,6 +210,18 @@ describe("product generator input", () => {
       stat(path.join(result.target, "scripts", "doctor.mjs")),
     ).resolves.toBeDefined();
     await expect(
+      readFile(path.join(result.target, "vercel.json"), "utf8"),
+    ).resolves.toContain("@products/proof-product");
+    await expect(
+      readFile(
+        path.join(result.target, ".github", "workflows", "quality.yml"),
+        "utf8",
+      ),
+    ).resolves.not.toContain("__DATABASE_QUALITY_STEPS__");
+    await expect(
+      stat(path.join(result.target, "docs", "runbooks", "rollback.md")),
+    ).resolves.toBeDefined();
+    await expect(
       readFile(
         path.join(root, "apps", "factory", "src", "generated", "products.json"),
         "utf8",
@@ -227,6 +267,17 @@ describe("product generator input", () => {
       await readFile(path.join(result.target, "package.json"), "utf8"),
     ) as { scripts: Record<string, string> };
     expect(rootManifest.scripts.postinstall).toBe("pnpm db:generate");
+    await expect(
+      readFile(
+        path.join(
+          result.target,
+          ".github",
+          "workflows",
+          "deploy-production.yml",
+        ),
+        "utf8",
+      ),
+    ).resolves.toContain("pnpm db:deploy");
   });
 
   it("removes partial output when composition fails", async () => {

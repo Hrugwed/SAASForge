@@ -9,18 +9,12 @@ for (const application of ["web", "factory"]) {
   });
 }
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL is required. Run the repository setup command before using Prisma.",
-  );
-}
-
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
-  datasource: {
-    url: process.env.DATABASE_URL,
-  },
+  ...(process.env.DATABASE_URL
+    ? { datasource: { url: process.env.DATABASE_URL } }
+    : {}),
 });

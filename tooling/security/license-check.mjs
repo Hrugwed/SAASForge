@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 
 const allowedLicenses = new Set([
   "(Apache-2.0 AND BSD-3-Clause)",
+  "(MIT OR CC0-1.0)",
   "0BSD",
   "Apache-2.0",
   "Apache-2.0 AND LGPL-3.0-or-later",
@@ -9,6 +10,7 @@ const allowedLicenses = new Set([
   "BSD-2-Clause",
   "BSD-3-Clause",
   "CC-BY-4.0",
+  "FSL-1.1-MIT",
   "EPL-2.0",
   "ISC",
   "MIT",

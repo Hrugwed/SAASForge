@@ -3,7 +3,7 @@ name: Quality
 on:
   pull_request:
   push:
-    branches: [main]
+    branches-ignore: [main]
 
 permissions:
   contents: read
@@ -15,15 +15,13 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     env:
       APP_ENV: test
-      AUTH_EMAIL_MODE: local
-      AUTH_REQUIRE_EMAIL_VERIFICATION: "false"
       BETTER_AUTH_SECRET: ci-only-secret-that-is-longer-than-32-characters
-      BETTER_AUTH_URL: http://127.0.0.1:3100
+      BETTER_AUTH_URL: http://127.0.0.1:3000
       DATABASE_URL: postgresql://product:product@127.0.0.1:5432/product
-      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
     services:
       postgres:
         image: postgres:17-alpine
@@ -48,13 +46,12 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run --if-present db:validate
-      - run: pnpm run --if-present db:deploy
+      # __DATABASE_QUALITY_STEPS__
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm license:check
       - run: pnpm build
-      - run: pnpm --filter "@products/*" exec playwright install --with-deps chromium
+      - run: pnpm --filter @products/__PRODUCT_SLUG__ exec playwright install --with-deps chromium
       - run: pnpm test:e2e
