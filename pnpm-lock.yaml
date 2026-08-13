@@ -229,6 +229,9 @@ importers:
 
   tooling/forge-cli:
     dependencies:
+      prettier:
+        specifier: ^3.6.2
+        version: 3.9.6
       zod:
         specifier: ^4.0.17
         version: 4.4.3

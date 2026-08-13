@@ -26,7 +26,7 @@ Start with `docs/vision.md`, `docs/production-readiness.md`, and `docs/context-m
 
 - [x] Remove SignalDesk and its shared-schema residue.
 - [x] Define product vision, context routing, provider policy, and measurable readiness gates.
-- [ ] Rebuild generator around product manifests, schema ownership, standalone export, and upgrades.
+- [ ] Rebuild generator around product manifests, schema ownership, standalone export, and upgrades. Standalone generation is proven; upgrade workflow remains.
 - [ ] Complete production capability contracts and recommended implementations.
 - [ ] Add setup/doctor, deployment, operations, recovery, and release automation.
 - [ ] Add security, accessibility, performance, supply-chain, and compatibility gates.
@@ -47,6 +47,8 @@ All applicable items in `docs/production-readiness.md` are checked with evidence
 
 - 2026-08-13: Repository audited; SignalDesk source, local output, registry record, migration, and product-specific shared models removed.
 - 2026-08-13: Phase-zero product and readiness standards created.
+- 2026-08-13: Generator changed from a factory-workspace app to a self-contained repository with selected package closure, owned schema/migrations, root tooling, agent instructions, and a versioned manifest.
+- 2026-08-13: Disposable all-capability repository passed install, Prisma generation, formatting, lint, strict types, unit tests, and production build; output was then removed.
 
 ## Recovery
 

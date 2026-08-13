@@ -19,7 +19,7 @@ packages/
   database/         Prisma schema, migrations, and PostgreSQL client
   email/            Validated transactional delivery boundary and templates
   ui/               Shared design system
-products/           Local generated products; intentionally empty in source
+products/           Ignored, standalone generated repositories
 templates/
   saas-product/     Base product and selectable module overlays
 tooling/

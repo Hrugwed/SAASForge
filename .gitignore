@@ -34,3 +34,5 @@ pnpm-debug.log*
 *.tsbuildinfo
 apps/*/generated/
 packages/database/src/generated/
+products/*/
+!products/.gitkeep

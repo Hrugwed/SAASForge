@@ -33,7 +33,9 @@ if (!name || !slug || !description) {
       modules: modules as ("auth" | "billing" | "email" | "analytics")[],
     });
     console.log(`Created ${result.input.name} at ${result.target}`);
-    console.log("Run pnpm install, then verify the generated product.");
+    console.log(
+      "The output is a self-contained repository. Run pnpm install inside it, then verify the product.",
+    );
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;

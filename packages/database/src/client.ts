@@ -10,7 +10,7 @@ function createDatabaseClient(): PrismaClient {
 
   if (!connectionString) {
     throw new Error(
-      "DATABASE_URL is required. Copy .env.example to apps/factory/.env.local before starting the app.",
+      "DATABASE_URL is required. Copy the application's .env.example to its local environment file before starting it.",
     );
   }
 

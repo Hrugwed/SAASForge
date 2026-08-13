@@ -30,6 +30,34 @@ async function createRepositoryFixture(packageJson: string) {
     "NEXT_PUBLIC_PRODUCT_NAME=__PRODUCT_NAME__\n",
     "utf8",
   );
+  await writeFile(
+    path.join(temporaryRoot, "package.json"),
+    JSON.stringify({ name: "saasforge", version: "1.2.3" }),
+    "utf8",
+  );
+  await writeFile(
+    path.join(temporaryRoot, "tsconfig.base.json"),
+    "{}\n",
+    "utf8",
+  );
+  await writeFile(path.join(temporaryRoot, "turbo.json"), "{}\n", "utf8");
+  for (const packageName of [
+    "analytics",
+    "auth",
+    "billing",
+    "config",
+    "database",
+    "email",
+    "ui",
+  ]) {
+    const packageRoot = path.join(temporaryRoot, "packages", packageName);
+    await mkdir(packageRoot, { recursive: true });
+    await writeFile(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({ name: `@saasforge/${packageName}` }),
+      "utf8",
+    );
+  }
   return temporaryRoot;
 }
 
@@ -78,14 +106,59 @@ describe("product generator input", () => {
     });
 
     await expect(
-      readFile(path.join(result.target, ".env.example"), "utf8"),
+      readFile(path.join(result.target, "apps", "web", ".env.example"), "utf8"),
     ).resolves.toContain("NEXT_PUBLIC_PRODUCT_NAME=Proof Product");
+    await expect(
+      readFile(path.join(result.target, "saasforge.manifest.json"), "utf8"),
+    ).resolves.toContain('"version": "1.2.3"');
+    await expect(
+      readFile(
+        path.join(result.target, "packages", "config", "package.json"),
+        "utf8",
+      ),
+    ).resolves.toContain("@saasforge/config");
     await expect(
       readFile(
         path.join(root, "apps", "factory", "src", "generated", "products.json"),
         "utf8",
       ),
-    ).resolves.toContain('"slug": "proof-product"');
+    ).resolves.toContain('"mode": "standalone"');
+  });
+
+  it("copies the selected package dependency closure into an independent repository", async () => {
+    const root = await createRepositoryFixture(
+      JSON.stringify({ dependencies: { "@saasforge/config": "workspace:*" } }),
+    );
+    const result = await createProduct(
+      root,
+      {
+        name: "Paid Product",
+        slug: "paid-product",
+        description:
+          "A paid product fixture that verifies capability ownership.",
+        modules: ["auth", "billing"],
+      },
+      { now: () => new Date("2026-01-02T03:04:05.000Z") },
+    );
+
+    await expect(
+      stat(path.join(result.target, "packages", "auth")),
+    ).resolves.toBeDefined();
+    await expect(
+      stat(path.join(result.target, "packages", "billing")),
+    ).resolves.toBeDefined();
+    await expect(
+      stat(path.join(result.target, "packages", "database")),
+    ).resolves.toBeDefined();
+    await expect(
+      stat(path.join(result.target, "apps", "factory")),
+    ).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    expect(result.manifest.generatedAt).toBe("2026-01-02T03:04:05.000Z");
+    expect(result.manifest.ownership.database).toBe(
+      "packages/database/prisma/schema.prisma",
+    );
   });
 
   it("removes partial output when composition fails", async () => {
