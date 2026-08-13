@@ -53,6 +53,7 @@ async function createRepositoryFixture(packageJson: string) {
     "database-auth.md",
     "email.md",
     "jobs.md",
+    "privacy-operations.md",
     "storage.md",
   ]) {
     await writeFile(

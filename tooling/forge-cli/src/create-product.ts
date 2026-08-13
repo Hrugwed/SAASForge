@@ -87,7 +87,7 @@ const packageDependencies = {
 } as const;
 
 const capabilityDocumentation = {
-  auth: ["database-auth.md", "email.md"],
+  auth: ["database-auth.md", "email.md", "privacy-operations.md"],
   billing: ["billing.md"],
   email: ["email.md"],
   jobs: ["jobs.md"],
@@ -287,6 +287,7 @@ async function appendModuleEnvironment(
 DATABASE_URL=postgresql://replace-me
 BETTER_AUTH_SECRET=replace-with-at-least-32-random-characters
 BETTER_AUTH_URL=http://localhost:3100
+SUPPORT_USER_IDS=
 `);
   }
   if (modules.includes("billing")) {
