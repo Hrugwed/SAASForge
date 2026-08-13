@@ -4,6 +4,7 @@ import path from "node:path";
 
 const root = process.cwd();
 const checks = [];
+const productionMode = process.argv.includes("--production");
 
 async function exists(target) {
   try {
@@ -17,6 +18,25 @@ async function exists(target) {
 
 function add(status, message, remediation) {
   checks.push({ status, message, remediation });
+}
+
+function parseEnvironment(source) {
+  const environment = {};
+  for (const line of source.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const separator = trimmed.indexOf("=");
+    if (separator < 1) continue;
+    environment[trimmed.slice(0, separator)] = trimmed
+      .slice(separator + 1)
+      .trim()
+      .replace(/^(['"])(.*)\1$/, "$2");
+  }
+  return environment;
+}
+
+function isPlaceholder(value) {
+  return !value || /replace|example\.com|change-me|your[-_]/i.test(value);
 }
 
 const [major = 0, minor = 0] = process.version
@@ -79,6 +99,55 @@ if (!(await exists(manifestPath))) {
         : "Local environment is not configured.",
       "Run pnpm product:setup; it never overwrites an existing environment.",
     );
+    if (environmentExists) {
+      const environment = parseEnvironment(
+        await readFile(environmentPath, "utf8"),
+      );
+      const required = new Set([
+        "NEXT_PUBLIC_APP_URL",
+        "APP_ENV",
+        "SENTRY_DSN",
+      ]);
+      const modules = new Set(manifest.product?.modules ?? []);
+      if (modules.has("auth")) {
+        required.add("DATABASE_URL");
+        required.add("BETTER_AUTH_SECRET");
+        required.add("BETTER_AUTH_URL");
+      }
+      if (modules.has("billing")) {
+        required.add("STRIPE_SECRET_KEY");
+        required.add("STRIPE_WEBHOOK_SECRET");
+        required.add("STRIPE_PRICE_DEFAULT");
+      }
+      if (modules.has("email")) {
+        required.add("RESEND_API_KEY");
+        required.add("EMAIL_FROM");
+      }
+      if (modules.has("analytics")) {
+        required.add("POSTHOG_API_KEY");
+        required.add("POSTHOG_HOST");
+      }
+      if (modules.has("jobs")) {
+        required.add("INNGEST_EVENT_KEY");
+        required.add("INNGEST_SIGNING_KEY");
+      }
+      if (modules.has("storage")) {
+        required.add("CLOUDFLARE_ACCOUNT_ID");
+        required.add("R2_ACCESS_KEY_ID");
+        required.add("R2_SECRET_ACCESS_KEY");
+        required.add("R2_BUCKET");
+      }
+      const incomplete = [...required].filter((key) =>
+        isPlaceholder(environment[key]),
+      );
+      add(
+        incomplete.length === 0 ? "pass" : productionMode ? "fail" : "warn",
+        incomplete.length === 0
+          ? "Enabled capability environment is configured."
+          : `Enabled capability environment is incomplete (${incomplete.join(", ")}).`,
+        "Configure product-owned credentials; values are never printed by the doctor.",
+      );
+    }
   } catch {
     add(
       "fail",

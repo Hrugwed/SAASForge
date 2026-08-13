@@ -74,6 +74,7 @@ type GenerationManifest = {
 const packageDependencies = {
   config: [],
   ui: [],
+  observability: [],
   analytics: [],
   email: [],
   database: [],
@@ -159,7 +160,7 @@ async function formatGeneratedFiles(directory: string): Promise<void> {
 function selectedPackages(
   modules: CreateProductInput["modules"],
 ): FactoryPackage[] {
-  const selected = new Set<FactoryPackage>(["config", "ui"]);
+  const selected = new Set<FactoryPackage>(["config", "observability", "ui"]);
   const visit = (name: FactoryPackage) => {
     if (selected.has(name)) return;
     selected.add(name);
@@ -286,6 +287,92 @@ R2_BUCKET=
   );
 }
 
+async function writeReadinessRoute(
+  appTarget: string,
+  modules: CreateProductInput["modules"],
+): Promise<void> {
+  const requiredEnvironment = ["NEXT_PUBLIC_APP_URL", "APP_ENV", "SENTRY_DSN"];
+  if (modules.includes("auth")) {
+    requiredEnvironment.push(
+      "DATABASE_URL",
+      "BETTER_AUTH_SECRET",
+      "BETTER_AUTH_URL",
+    );
+  }
+  if (modules.includes("billing")) {
+    requiredEnvironment.push(
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "STRIPE_PRICE_DEFAULT",
+    );
+  }
+  if (modules.includes("email")) {
+    requiredEnvironment.push("RESEND_API_KEY", "EMAIL_FROM");
+  }
+  if (modules.includes("analytics")) {
+    requiredEnvironment.push("POSTHOG_API_KEY", "POSTHOG_HOST");
+  }
+  if (modules.includes("jobs")) {
+    requiredEnvironment.push("INNGEST_EVENT_KEY", "INNGEST_SIGNING_KEY");
+  }
+  if (modules.includes("storage")) {
+    requiredEnvironment.push(
+      "CLOUDFLARE_ACCOUNT_ID",
+      "R2_ACCESS_KEY_ID",
+      "R2_SECRET_ACCESS_KEY",
+      "R2_BUCKET",
+    );
+  }
+
+  const databaseCheck = modules.includes("auth")
+    ? `
+  if (missingEnvironment.length === 0) {
+    try {
+      const { database } = await import("@saasforge/database");
+      await database.$queryRaw\`SELECT 1\`;
+      checks.database = "ready";
+    } catch {
+      checks.database = "unavailable";
+    }
+  } else {
+    checks.database = "not-configured";
+  }
+`
+    : "";
+  const source = `import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+const requiredEnvironment = ${JSON.stringify(requiredEnvironment)} as const;
+
+export async function GET() {
+  const missingEnvironment = requiredEnvironment.filter(
+    (name) => !process.env[name]?.trim(),
+  );
+  const checks: Record<string, string> = {
+    configuration: missingEnvironment.length === 0 ? "ready" : "unavailable",
+  };
+${databaseCheck}
+  const healthy = Object.values(checks).every((status) => status === "ready");
+  return NextResponse.json(
+    {
+      status: healthy ? "ready" : "unavailable",
+      checks,
+      missingEnvironment,
+      timestamp: new Date().toISOString(),
+    },
+    {
+      status: healthy ? 200 : 503,
+      headers: { "Cache-Control": "no-store" },
+    },
+  );
+}
+`;
+  const route = path.join(appTarget, "src", "app", "api", "ready", "route.ts");
+  await mkdir(path.dirname(route), { recursive: true });
+  await writeFile(route, source, "utf8");
+}
+
 async function writeRepositoryFiles(
   target: string,
   input: CreateProductInput,
@@ -327,6 +414,7 @@ async function writeRepositoryFiles(
     pnpm: {
       onlyBuiltDependencies: [
         "@prisma/engines",
+        "@sentry/cli",
         "esbuild",
         "prisma",
         "protobufjs",
@@ -501,6 +589,7 @@ export async function createProduct(
     });
     await updatePackageManifest(appTarget, input.modules);
     await appendModuleEnvironment(appTarget, input.modules);
+    await writeReadinessRoute(appTarget, input.modules);
     await writeRepositoryFiles(
       target,
       input,

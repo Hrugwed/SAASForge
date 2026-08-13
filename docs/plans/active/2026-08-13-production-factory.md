@@ -52,6 +52,8 @@ All applicable items in `docs/production-readiness.md` are checked with evidence
 - 2026-08-13: Added non-destructive factory and generated-product setup/doctor workflows with secret-safe diagnostics.
 - 2026-08-13: Added production adapters and tenant-aware contracts for Resend email, PostHog analytics, Inngest jobs, and Cloudflare R2 storage.
 - 2026-08-13: A fresh all-capability standalone repository passed setup/doctor, install, Prisma generation, formatting, lint, strict types, unit tests, and a production build before being safely removed.
+- 2026-08-13: Added always-on structured redacted logging, opt-in Sentry error/tracing configuration, liveness/readiness separation, and production-mode provider configuration checks.
+- 2026-08-13: A minimal standalone product proved the observability-only dependency closure through clean install, doctor, formatting, lint, strict types, unit tests, and a production build exposing both health and readiness routes.
 
 ## Recovery
 

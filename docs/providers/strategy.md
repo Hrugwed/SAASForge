@@ -22,6 +22,8 @@ These are defaults, not leaked dependencies. Vendor SDK objects must not cross c
 
 The Resend adapter requires idempotency keys, the PostHog adapter supports consent suppression and organization grouping, the Inngest adapter preserves tenant context and event idempotency, and the R2 adapter issues short-lived tenant-scoped signed URLs. Provider credentials are validated only at the server boundary.
 
+Every generated product includes JSON logs with explicit correlation fields and redaction, plus Sentry wiring that is disabled until the product supplies its own DSN. Default PII collection is off. `/api/health` proves the process is alive; `/api/ready` checks required configuration and the owned database when selected. `pnpm product:doctor --production` treats missing enabled-provider credentials as a release failure without printing their values.
+
 ## Adding or replacing a provider
 
 Document the reason, data handled, regions, security assumptions, failure modes, webhook behavior, pricing risk, export path, and exit strategy. Add contract tests shared by all implementations. Do not add a provider only because an agent can generate the integration quickly.

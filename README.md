@@ -19,6 +19,7 @@ packages/
   database/         Prisma schema, migrations, and PostgreSQL client
   email/            Validated transactional delivery boundary and templates
   jobs/             Durable tenant event contract and Inngest adapter
+  observability/    Redacted structured logging shared by every product
   storage/          Private tenant object contract and Cloudflare R2 adapter
   ui/               Shared design system
 products/           Ignored, standalone generated repositories
@@ -53,7 +54,7 @@ pnpm test:e2e
 
 `factory:setup` creates only an ignored local environment and never overwrites an existing one. `factory:doctor` validates prerequisites and configuration without printing secret values. Generated repositories provide their own `pnpm product:setup` and `pnpm product:doctor` commands.
 
-The factory contains the control center, design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, security headers, health endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
+The factory contains the control center, design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, structured logs, Sentry wiring, security headers, health/readiness endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
 
 ## Principles
 

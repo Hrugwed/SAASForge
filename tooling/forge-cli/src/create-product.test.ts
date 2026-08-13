@@ -67,6 +67,7 @@ async function createRepositoryFixture(packageJson: string) {
     "database",
     "email",
     "jobs",
+    "observability",
     "storage",
     "ui",
   ]) {
@@ -149,6 +150,27 @@ describe("product generator input", () => {
         "utf8",
       ),
     ).resolves.toContain("@saasforge/config");
+    await expect(
+      readFile(
+        path.join(result.target, "packages", "observability", "package.json"),
+        "utf8",
+      ),
+    ).resolves.toContain("@saasforge/observability");
+    await expect(
+      readFile(
+        path.join(
+          result.target,
+          "apps",
+          "web",
+          "src",
+          "app",
+          "api",
+          "ready",
+          "route.ts",
+        ),
+        "utf8",
+      ),
+    ).resolves.toContain('status: healthy ? "ready" : "unavailable"');
     await expect(
       stat(path.join(result.target, "scripts", "doctor.mjs")),
     ).resolves.toBeDefined();
