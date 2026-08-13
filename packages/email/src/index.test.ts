@@ -13,10 +13,16 @@ describe("email module", () => {
       to: "maker@example.com",
       subject: "Welcome",
       text: "Your workspace is ready.",
+      idempotencyKey: "welcome-maker",
     });
     expect(send).toHaveBeenCalledOnce();
     await expect(
-      service.send({ to: "not-an-email", subject: "Welcome", text: "Ready" }),
+      service.send({
+        to: "not-an-email",
+        subject: "Welcome",
+        text: "Ready",
+        idempotencyKey: "welcome-invalid",
+      }),
     ).rejects.toThrow();
   });
 

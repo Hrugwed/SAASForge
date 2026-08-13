@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit",
@@ -13,6 +14,7 @@
     "clean": "node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\""
   },
   "dependencies": {
+    "posthog-node": "4.18.0",
     "zod": "^4.0.17"
   },
   "devDependencies": {

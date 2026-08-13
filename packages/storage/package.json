@@ -1,0 +1,26 @@
+{
+  "name": "@saasforge/storage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1109.0",
+    "@aws-sdk/s3-request-presigner": "^3.1109.0",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.7"
+  }
+}

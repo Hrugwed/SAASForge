@@ -77,7 +77,7 @@ if (!(await exists(manifestPath))) {
       environmentExists
         ? "Local environment is present."
         : "Local environment is not configured.",
-      "Run pnpm setup; it never overwrites an existing environment.",
+      "Run pnpm product:setup; it never overwrites an existing environment.",
     );
   } catch {
     add(

@@ -20,6 +20,8 @@ SaaSForge ships one recommended provider per capability, a stable internal contr
 
 These are defaults, not leaked dependencies. Vendor SDK objects must not cross capability boundaries. Provider setup is opt-in, credentials stay outside Git, and local development must remain possible without paid accounts where practical.
 
+The Resend adapter requires idempotency keys, the PostHog adapter supports consent suppression and organization grouping, the Inngest adapter preserves tenant context and event idempotency, and the R2 adapter issues short-lived tenant-scoped signed URLs. Provider credentials are validated only at the server boundary.
+
 ## Adding or replacing a provider
 
 Document the reason, data handled, regions, security assumptions, failure modes, webhook behavior, pricing risk, export path, and exit strategy. Add contract tests shared by all implementations. Do not add a provider only because an agent can generate the integration quickly.

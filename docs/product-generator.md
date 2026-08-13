@@ -5,10 +5,10 @@
 Run the generator from the repository root:
 
 ```bash
-pnpm forge:create -- --name "My Product" --slug "my-product" --description "A clear customer outcome." --modules "auth,billing,email,analytics"
+pnpm forge:create -- --name "My Product" --slug "my-product" --description "A clear customer outcome." --modules "auth,billing,email,analytics,jobs,storage"
 ```
 
-Supported modules are `auth`, `billing`, `email`, and `analytics`. Billing requires authentication. The generator validates all input, prevents directory traversal and accidental replacement, composes the selected templates, and removes partial output if generation fails.
+Supported modules are `auth`, `billing`, `email`, `analytics`, `jobs`, and `storage`. Billing, jobs, and storage require authentication so tenant ownership is established. The generator validates all input, resolves package dependency closure, prevents directory traversal and accidental replacement, composes the selected templates, and removes partial output if generation fails.
 
 The output under `products/<slug>` is a self-contained repository, not a package in the factory workspace. It contains `apps/web`, only the selected reusable capability packages and their dependency closure, root quality tooling, safe `setup` and `doctor` commands, its own database schema and migrations when data capabilities are enabled, agent instructions, and `saasforge.manifest.json`. Move that directory to its own Git repository when product work begins.
 
@@ -27,7 +27,7 @@ The base template supplies accessible structure, metadata, legal/blog routes, he
 Before considering a generated product ready for feature work:
 
 1. Configure an isolated local database and authentication secret.
-2. Change into the generated repository and run `pnpm install`, `pnpm setup`, `pnpm doctor`, database migrations, lint, type checking, unit tests, and a production build.
+2. Change into the generated repository and run `pnpm install`, `pnpm product:setup`, `pnpm product:doctor`, database migrations, lint, type checking, unit tests, and a production build.
 3. Run the Playwright journey and verify signup, protected access, workspace creation, and sign-out.
 4. If billing is selected, configure a Stripe sandbox Price and webhook and test success, cancellation, and failed-payment states.
 5. Replace placeholder legal copy and support email before any public launch.

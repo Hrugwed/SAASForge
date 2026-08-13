@@ -50,6 +50,8 @@ All applicable items in `docs/production-readiness.md` are checked with evidence
 - 2026-08-13: Generator changed from a factory-workspace app to a self-contained repository with selected package closure, owned schema/migrations, root tooling, agent instructions, and a versioned manifest.
 - 2026-08-13: Disposable all-capability repository passed install, Prisma generation, formatting, lint, strict types, unit tests, and production build; output was then removed.
 - 2026-08-13: Added non-destructive factory and generated-product setup/doctor workflows with secret-safe diagnostics.
+- 2026-08-13: Added production adapters and tenant-aware contracts for Resend email, PostHog analytics, Inngest jobs, and Cloudflare R2 storage.
+- 2026-08-13: A fresh all-capability standalone repository passed setup/doctor, install, Prisma generation, formatting, lint, strict types, unit tests, and a production build before being safely removed.
 
 ## Recovery
 

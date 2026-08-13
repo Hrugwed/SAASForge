@@ -22,4 +22,6 @@ try {
   console.log(`Created ${local}`);
 }
 
-console.log("Next: pnpm doctor, pnpm db:deploy (when enabled), then pnpm dev");
+console.log(
+  "Next: pnpm product:doctor, pnpm db:deploy (when enabled), then pnpm dev",
+);

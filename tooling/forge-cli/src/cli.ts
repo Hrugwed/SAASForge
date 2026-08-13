@@ -21,7 +21,7 @@ const modules = (option("modules") ?? "auth")
 
 if (!name || !slug || !description) {
   console.error(
-    "Usage: pnpm forge:create --name <name> --slug <slug> --description <description> --modules auth,billing,email,analytics",
+    "Usage: pnpm forge:create --name <name> --slug <slug> --description <description> --modules auth,billing,email,analytics,jobs,storage",
   );
   process.exitCode = 1;
 } else {
@@ -30,7 +30,9 @@ if (!name || !slug || !description) {
       name,
       slug,
       description,
-      modules: modules as ("auth" | "billing" | "email" | "analytics")[],
+      modules: modules as (
+        "auth" | "billing" | "email" | "analytics" | "jobs" | "storage"
+      )[],
     });
     console.log(`Created ${result.input.name} at ${result.target}`);
     console.log(

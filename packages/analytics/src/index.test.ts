@@ -14,7 +14,7 @@ describe("analytics module", () => {
       expect.objectContaining({ name: "product.activated" }),
     );
     await expect(
-      analytics.capture({ name: "Invalid Event Name!" }),
+      analytics.capture({ name: "Invalid Event Name!", userId: "user_123" }),
     ).rejects.toThrow();
   });
 });

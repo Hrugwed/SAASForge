@@ -16,6 +16,8 @@ export const supportedModules = [
   "billing",
   "email",
   "analytics",
+  "jobs",
+  "storage",
 ] as const;
 
 export const createProductInputSchema = z
@@ -32,6 +34,18 @@ export const createProductInputSchema = z
         message: "The billing module requires the auth module.",
         path: ["modules"],
       });
+    }
+    for (const tenantModule of ["jobs", "storage"] as const) {
+      if (
+        input.modules.includes(tenantModule) &&
+        !input.modules.includes("auth")
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: `The ${tenantModule} module requires the auth module for tenant ownership.`,
+          path: ["modules"],
+        });
+      }
     }
   });
 
@@ -65,6 +79,8 @@ const packageDependencies = {
   database: [],
   auth: ["database"],
   billing: ["database"],
+  jobs: [],
+  storage: [],
 } as const;
 
 type FactoryPackage = keyof typeof packageDependencies;
@@ -181,6 +197,20 @@ async function updatePackageManifest(
     manifest.dependencies["@saasforge/email"] = "workspace:*";
   if (modules.includes("analytics"))
     manifest.dependencies["@saasforge/analytics"] = "workspace:*";
+  if (modules.includes("jobs")) {
+    manifest.dependencies["@saasforge/jobs"] = "workspace:*";
+    manifest.dependencies["inngest"] = "^4.18.0";
+  }
+  if (modules.includes("storage"))
+    manifest.dependencies["@saasforge/storage"] = "workspace:*";
+  if (
+    modules.includes("email") ||
+    modules.includes("analytics") ||
+    modules.includes("jobs") ||
+    modules.includes("storage")
+  ) {
+    manifest.dependencies["server-only"] = "0.0.1";
+  }
 
   manifest.dependencies = Object.fromEntries(
     Object.entries(manifest.dependencies).sort(([left], [right]) =>
@@ -215,6 +245,37 @@ STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_DEFAULT=
 `);
   }
+  if (modules.includes("email")) {
+    sections.push(`
+# Resend transactional email; verify the sending domain before launch
+RESEND_API_KEY=
+EMAIL_FROM=Product Name <hello@example.com>
+`);
+  }
+  if (modules.includes("analytics")) {
+    sections.push(`
+# PostHog server analytics; select the correct regional host
+POSTHOG_API_KEY=
+POSTHOG_HOST=https://us.i.posthog.com
+`);
+  }
+  if (modules.includes("jobs")) {
+    sections.push(`
+# Inngest durable jobs; INNGEST_DEV uses the local development server
+INNGEST_DEV=1
+INNGEST_EVENT_KEY=
+INNGEST_SIGNING_KEY=
+`);
+  }
+  if (modules.includes("storage")) {
+    sections.push(`
+# Cloudflare R2 private object storage
+CLOUDFLARE_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET=
+`);
+  }
   if (sections.length === 0) return;
   const environmentPath = path.join(appTarget, ".env.example");
   const current = await readFile(environmentPath, "utf8");
@@ -242,8 +303,8 @@ async function writeRepositoryFiles(
     scripts: {
       build: "turbo run build",
       dev: "turbo run dev",
-      doctor: "node scripts/doctor.mjs",
-      setup: "node scripts/setup.mjs",
+      "product:doctor": "node scripts/doctor.mjs",
+      "product:setup": "node scripts/setup.mjs",
       lint: "turbo run lint",
       typecheck: "turbo run typecheck",
       test: "turbo run test",
@@ -268,6 +329,7 @@ async function writeRepositoryFiles(
         "@prisma/engines",
         "esbuild",
         "prisma",
+        "protobufjs",
         "sharp",
         "unrs-resolver",
       ],
@@ -421,10 +483,21 @@ export async function createProduct(
       __BILLING_ENABLED__: String(modules.has("billing")),
       __EMAIL_ENABLED__: String(modules.has("email")),
       __ANALYTICS_ENABLED__: String(modules.has("analytics")),
+      __JOBS_ENABLED__: String(modules.has("jobs")),
+      __STORAGE_ENABLED__: String(modules.has("storage")),
       __TRANSPILE_PACKAGES__: packages
         .map((name) => `"@saasforge/${name}"`)
         .join(", "),
       __FACTORY_VERSION__: factoryVersion,
+      "{{PRODUCT_NAME}}": input.name,
+      "{{PRODUCT_DESCRIPTION}}": input.description,
+      "{{FACTORY_VERSION}}": factoryVersion,
+      "{{AUTH_ENABLED}}": String(modules.has("auth")),
+      "{{BILLING_ENABLED}}": String(modules.has("billing")),
+      "{{EMAIL_ENABLED}}": String(modules.has("email")),
+      "{{ANALYTICS_ENABLED}}": String(modules.has("analytics")),
+      "{{JOBS_ENABLED}}": String(modules.has("jobs")),
+      "{{STORAGE_ENABLED}}": String(modules.has("storage")),
     });
     await updatePackageManifest(appTarget, input.modules);
     await appendModuleEnvironment(appTarget, input.modules);

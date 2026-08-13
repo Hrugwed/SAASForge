@@ -16,4 +16,6 @@ export const enabledModules = {
   billing: __BILLING_ENABLED__,
   email: __EMAIL_ENABLED__,
   analytics: __ANALYTICS_ENABLED__,
+  jobs: __JOBS_ENABLED__,
+  storage: __STORAGE_ENABLED__,
 } as const;

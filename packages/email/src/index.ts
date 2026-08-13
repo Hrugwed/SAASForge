@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 export const emailMessageSchema = z.object({
@@ -6,10 +7,17 @@ export const emailMessageSchema = z.object({
   text: z.string().min(1).max(100_000),
   html: z.string().min(1).max(200_000).optional(),
   replyTo: z.email().optional(),
-  tags: z.record(z.string().max(40), z.string().max(100)).default({}),
+  tags: z
+    .record(
+      z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/),
+      z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/),
+    )
+    .default({}),
+  idempotencyKey: z.string().trim().min(8).max(256),
 });
 
-export type EmailMessage = z.input<typeof emailMessageSchema>;
+export type EmailMessageInput = z.input<typeof emailMessageSchema>;
+export type EmailMessage = z.output<typeof emailMessageSchema>;
 export type EmailDelivery = {
   providerMessageId: string;
   acceptedAt: Date;
@@ -21,11 +29,20 @@ export interface EmailProvider {
 
 export function createEmailService(provider: EmailProvider) {
   return {
-    async send(message: EmailMessage): Promise<EmailDelivery> {
+    async send(message: EmailMessageInput): Promise<EmailDelivery> {
       return provider.send(emailMessageSchema.parse(message));
     },
   };
 }
+
+export const localEmailProvider: EmailProvider = {
+  async send() {
+    return {
+      providerMessageId: `local_${randomUUID()}`,
+      acceptedAt: new Date(),
+    };
+  },
+};
 
 export function renderWelcomeEmail(input: {
   productName: string;

@@ -31,6 +31,11 @@ async function createRepositoryFixture(packageJson: string) {
     "utf8",
   );
   await writeFile(
+    path.join(base, "README.md"),
+    "# {{PRODUCT_NAME}}\n\n{{PRODUCT_DESCRIPTION}}\n",
+    "utf8",
+  );
+  await writeFile(
     path.join(temporaryRoot, "package.json"),
     JSON.stringify({ name: "saasforge", version: "1.2.3" }),
     "utf8",
@@ -61,6 +66,8 @@ async function createRepositoryFixture(packageJson: string) {
     "config",
     "database",
     "email",
+    "jobs",
+    "storage",
     "ui",
   ]) {
     const packageRoot = path.join(temporaryRoot, "packages", packageName);
@@ -87,7 +94,7 @@ describe("product generator input", () => {
     ).toBe(true);
   });
 
-  it("rejects traversal and billing without authentication", () => {
+  it("rejects traversal and tenant modules without authentication", () => {
     expect(
       createProductInputSchema.safeParse({
         name: "Unsafe Product",
@@ -103,6 +110,15 @@ describe("product generator input", () => {
         description:
           "This billing configuration deliberately omits authentication.",
         modules: ["billing"],
+      }).success,
+    ).toBe(false);
+    expect(
+      createProductInputSchema.safeParse({
+        name: "Unowned Storage",
+        slug: "unowned-storage",
+        description:
+          "This storage configuration deliberately omits tenant authentication.",
+        modules: ["storage"],
       }).success,
     ).toBe(false);
   });
@@ -124,6 +140,9 @@ describe("product generator input", () => {
     await expect(
       readFile(path.join(result.target, "saasforge.manifest.json"), "utf8"),
     ).resolves.toContain('"version": "1.2.3"');
+    await expect(
+      readFile(path.join(result.target, "apps", "web", "README.md"), "utf8"),
+    ).resolves.toContain("# Proof Product");
     await expect(
       readFile(
         path.join(result.target, "packages", "config", "package.json"),

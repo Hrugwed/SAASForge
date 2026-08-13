@@ -18,6 +18,8 @@ packages/
   config/           Validated product configuration
   database/         Prisma schema, migrations, and PostgreSQL client
   email/            Validated transactional delivery boundary and templates
+  jobs/             Durable tenant event contract and Inngest adapter
+  storage/          Private tenant object contract and Cloudflare R2 adapter
   ui/               Shared design system
 products/           Ignored, standalone generated repositories
 templates/
@@ -40,7 +42,7 @@ pnpm factory:setup
 pnpm factory:doctor
 docker compose up -d
 pnpm db:migrate
-pnpm forge:create -- --name "My Product" --slug "my-product" --description "A clear customer outcome described here." --modules "auth,billing,email,analytics"
+pnpm forge:create -- --name "My Product" --slug "my-product" --description "A clear customer outcome described here." --modules "auth,billing,email,analytics,jobs,storage"
 pnpm dev
 pnpm lint
 pnpm typecheck
@@ -49,7 +51,7 @@ pnpm build
 pnpm test:e2e
 ```
 
-`factory:setup` creates only an ignored local environment and never overwrites an existing one. `factory:doctor` validates prerequisites and configuration without printing secret values. Generated repositories provide their own `pnpm setup` and `pnpm doctor` commands.
+`factory:setup` creates only an ignored local environment and never overwrites an existing one. `factory:doctor` validates prerequisites and configuration without printing secret values. Generated repositories provide their own `pnpm product:setup` and `pnpm product:doctor` commands.
 
 The factory contains the control center, design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, security headers, health endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
 
