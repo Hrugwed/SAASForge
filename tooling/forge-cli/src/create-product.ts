@@ -8,6 +8,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { format } from "prettier";
 import { z } from "zod";
 
@@ -59,8 +60,8 @@ type ProductRegistryEntry = CreateProductInput & {
 };
 
 type GenerationManifest = {
-  schemaVersion: 1;
-  factory: { name: "SaaSForge"; version: string; templateVersion: 1 };
+  schemaVersion: 2;
+  factory: { name: "SaaSForge"; version: string; templateVersion: 2 };
   product: CreateProductInput;
   outputMode: "standalone";
   generatedAt: string;
@@ -69,6 +70,7 @@ type GenerationManifest = {
     database: "packages/database/prisma/schema.prisma" | null;
     environment: "apps/web/.env.local";
   };
+  managedFiles: Record<string, string>;
 };
 
 const packageDependencies = {
@@ -165,6 +167,36 @@ async function formatGeneratedFiles(directory: string): Promise<void> {
     const source = await readFile(target, "utf8");
     await writeFile(target, await format(source, { filepath: target }), "utf8");
   }
+}
+
+async function fingerprintManagedFiles(
+  directory: string,
+  root = directory,
+): Promise<Record<string, string>> {
+  const fingerprints: Record<string, string> = {};
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if ([".git", ".next", ".turbo", "node_modules"].includes(entry.name))
+      continue;
+    const target = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      Object.assign(fingerprints, await fingerprintManagedFiles(target, root));
+      continue;
+    }
+    const relative = path.relative(root, target).replaceAll("\\", "/");
+    if (
+      relative === "saasforge.manifest.json" ||
+      relative === "pnpm-lock.yaml" ||
+      relative.endsWith(".env.local")
+    )
+      continue;
+    const content = await readFile(target);
+    fingerprints[relative] = createHash("sha256").update(content).digest("hex");
+  }
+  return Object.fromEntries(
+    Object.entries(fingerprints).sort(([left], [right]) =>
+      left.localeCompare(right),
+    ),
+  );
 }
 
 function selectedPackages(
@@ -402,6 +434,7 @@ async function writeRepositoryFiles(
       build: "turbo run build",
       dev: "turbo run dev",
       "product:doctor": "node scripts/doctor.mjs",
+      "product:changes": "node scripts/managed-files.mjs",
       "product:setup": "node scripts/setup.mjs",
       lint: "turbo run lint",
       typecheck: "turbo run typecheck",
@@ -438,8 +471,8 @@ async function writeRepositoryFiles(
     },
   };
   const manifest: GenerationManifest = {
-    schemaVersion: 1,
-    factory: { name: "SaaSForge", version: factoryVersion, templateVersion: 1 },
+    schemaVersion: 2,
+    factory: { name: "SaaSForge", version: factoryVersion, templateVersion: 2 },
     product: input,
     outputMode: "standalone",
     generatedAt,
@@ -448,6 +481,7 @@ async function writeRepositoryFiles(
       database: hasDatabase ? "packages/database/prisma/schema.prisma" : null,
       environment: "apps/web/.env.local",
     },
+    managedFiles: {},
   };
 
   await writeFile(
@@ -629,6 +663,18 @@ export async function createProduct(
         : "",
     });
     await formatGeneratedFiles(target);
+
+    const generatedManifest = JSON.parse(
+      await readFile(path.join(target, "saasforge.manifest.json"), "utf8"),
+    ) as GenerationManifest;
+    generatedManifest.managedFiles = await fingerprintManagedFiles(target);
+    await writeFile(
+      path.join(target, "saasforge.manifest.json"),
+      await format(`${JSON.stringify(generatedManifest, null, 2)}\n`, {
+        filepath: path.join(target, "saasforge.manifest.json"),
+      }),
+      "utf8",
+    );
 
     const manifest = JSON.parse(
       await readFile(path.join(target, "saasforge.manifest.json"), "utf8"),

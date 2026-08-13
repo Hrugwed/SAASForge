@@ -72,7 +72,7 @@ if (!(await exists(manifestPath))) {
   try {
     const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
     const valid =
-      manifest.schemaVersion === 1 &&
+      [1, 2].includes(manifest.schemaVersion) &&
       manifest.outputMode === "standalone" &&
       manifest.ownership?.application === "apps/web";
     add(

@@ -176,6 +176,10 @@ describe("product generator input", () => {
     await expect(
       readFile(path.join(result.target, "saasforge.manifest.json"), "utf8"),
     ).resolves.toContain('"version": "1.2.3"');
+    expect(result.manifest.schemaVersion).toBe(2);
+    expect(result.manifest.managedFiles["apps/web/package.json"]).toMatch(
+      /^[a-f0-9]{64}$/,
+    );
     await expect(
       readFile(path.join(result.target, "apps", "web", "README.md"), "utf8"),
     ).resolves.toContain("# Proof Product");

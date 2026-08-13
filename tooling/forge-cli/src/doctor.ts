@@ -191,7 +191,8 @@ async function productChecks(root: string): Promise<DoctorCheck[]> {
       };
     };
     const valid =
-      manifest.schemaVersion === 1 &&
+      typeof manifest.schemaVersion === "number" &&
+      [1, 2].includes(manifest.schemaVersion) &&
       manifest.outputMode === "standalone" &&
       manifest.ownership?.application === "apps/web";
     checks.push(
