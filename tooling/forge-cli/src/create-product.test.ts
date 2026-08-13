@@ -51,6 +51,7 @@ async function createRepositoryFixture(packageJson: string) {
   for (const document of [
     "billing.md",
     "database-auth.md",
+    "email.md",
     "jobs.md",
     "storage.md",
   ]) {

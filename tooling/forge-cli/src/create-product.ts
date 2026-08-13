@@ -87,10 +87,11 @@ const packageDependencies = {
 } as const;
 
 const capabilityDocumentation = {
-  auth: "database-auth.md",
-  billing: "billing.md",
-  jobs: "jobs.md",
-  storage: "storage.md",
+  auth: ["database-auth.md", "email.md"],
+  billing: ["billing.md"],
+  email: ["email.md"],
+  jobs: ["jobs.md"],
+  storage: ["storage.md"],
 } as const;
 
 type FactoryPackage = keyof typeof packageDependencies;
@@ -648,17 +649,18 @@ export async function createProduct(
       path.join(target, "tooling", "security", "license-check.mjs"),
     );
     for (const moduleName of input.modules) {
-      const document =
+      const documents =
         capabilityDocumentation[
           moduleName as keyof typeof capabilityDocumentation
         ];
-      if (!document) continue;
+      if (!documents) continue;
       const documentationTarget = path.join(target, "docs", "capabilities");
       await mkdir(documentationTarget, { recursive: true });
-      await cp(
-        path.join(repositoryRoot, "docs", document),
-        path.join(documentationTarget, document),
-      );
+      for (const document of documents) {
+        const destination = path.join(documentationTarget, document);
+        if (await exists(destination)) continue;
+        await cp(path.join(repositoryRoot, "docs", document), destination);
+      }
     }
 
     const modules = new Set(input.modules);

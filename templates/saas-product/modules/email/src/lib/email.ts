@@ -6,6 +6,7 @@ import {
 } from "@saasforge/email";
 import { createResendEmailProvider } from "@saasforge/email/server";
 import { productConfig } from "./product-config";
+import { logger } from "./logger";
 
 let service: ReturnType<typeof createEmailService> | undefined;
 
@@ -35,4 +36,27 @@ export function productWelcomeEmail(input: {
     userName: input.userName,
     dashboardUrl: input.dashboardUrl,
   });
+}
+
+export async function sendProductEmail(
+  message: Parameters<ReturnType<typeof createEmailService>["send"]>[0],
+) {
+  try {
+    const delivery = await getEmailService().send(message);
+    logger.info(
+      {
+        attempts: delivery.attempts,
+        providerMessageId: delivery.providerMessageId,
+        tags: message.tags,
+      },
+      "Transactional email accepted",
+    );
+    return delivery;
+  } catch (error) {
+    logger.error(
+      { error, tags: message.tags },
+      "Transactional email delivery failed",
+    );
+    throw error;
+  }
 }

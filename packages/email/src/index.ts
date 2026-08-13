@@ -21,6 +21,7 @@ export type EmailMessage = z.output<typeof emailMessageSchema>;
 export type EmailDelivery = {
   providerMessageId: string;
   acceptedAt: Date;
+  attempts: number;
 };
 
 export interface EmailProvider {
@@ -40,6 +41,7 @@ export const localEmailProvider: EmailProvider = {
     return {
       providerMessageId: `local_${randomUUID()}`,
       acceptedAt: new Date(),
+      attempts: 1,
     };
   },
 };
