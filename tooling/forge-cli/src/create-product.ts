@@ -59,7 +59,7 @@ type ProductRegistryEntry = CreateProductInput & {
   relativePath: string;
 };
 
-type GenerationManifest = {
+export type GenerationManifest = {
   schemaVersion: 2;
   factory: { name: "SaaSForge"; version: string; templateVersion: 2 };
   product: CreateProductInput;
@@ -576,19 +576,19 @@ async function updateRegistry(
   );
 }
 
-export async function createProduct(
+export async function composeProduct(
   repositoryRoot: string,
   rawInput: CreateProductInput,
-  options: { now?: () => Date } = {},
+  target: string,
+  options: { now?: () => Date; updateRegistry?: boolean } = {},
 ): Promise<{
   target: string;
   input: CreateProductInput;
   manifest: GenerationManifest;
 }> {
   const input = createProductInputSchema.parse(rawInput);
-  const productsRoot = path.resolve(repositoryRoot, "products");
-  const target = path.resolve(productsRoot, input.slug);
-  assertInside(productsRoot, target);
+  const resolvedTarget = path.resolve(target);
+  if (resolvedTarget !== target) target = resolvedTarget;
   if (await exists(target))
     throw new Error(`Product directory already exists: ${target}`);
 
@@ -607,7 +607,6 @@ export async function createProduct(
   const appTarget = path.join(target, "apps", "web");
   const packages = selectedPackages(input.modules);
 
-  await mkdir(productsRoot, { recursive: true });
   try {
     await mkdir(path.dirname(appTarget), { recursive: true });
     const repositoryTemplate = path.join(templateRoot, "repository");
@@ -728,16 +727,40 @@ export async function createProduct(
     const manifest = JSON.parse(
       await readFile(path.join(target, "saasforge.manifest.json"), "utf8"),
     ) as GenerationManifest;
-    await updateRegistry(repositoryRoot, {
-      ...input,
-      createdAt: generatedAt,
-      status: "generated",
-      mode: "standalone",
-      relativePath: path.relative(repositoryRoot, target).replaceAll("\\", "/"),
-    });
+    if (options.updateRegistry) {
+      await updateRegistry(repositoryRoot, {
+        ...input,
+        createdAt: generatedAt,
+        status: "generated",
+        mode: "standalone",
+        relativePath: path
+          .relative(repositoryRoot, target)
+          .replaceAll("\\", "/"),
+      });
+    }
     return { target, input, manifest };
   } catch (error) {
     await rm(target, { recursive: true, force: true });
     throw error;
   }
+}
+
+export async function createProduct(
+  repositoryRoot: string,
+  rawInput: CreateProductInput,
+  options: { now?: () => Date } = {},
+): Promise<{
+  target: string;
+  input: CreateProductInput;
+  manifest: GenerationManifest;
+}> {
+  const input = createProductInputSchema.parse(rawInput);
+  const productsRoot = path.resolve(repositoryRoot, "products");
+  const target = path.resolve(productsRoot, input.slug);
+  assertInside(productsRoot, target);
+  await mkdir(productsRoot, { recursive: true });
+  return composeProduct(repositoryRoot, input, target, {
+    now: options.now,
+    updateRegistry: true,
+  });
 }

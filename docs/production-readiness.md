@@ -17,7 +17,7 @@ SaaSForge is production-ready only when every factory gate is complete. A genera
 - [ ] Each product owns its schema extensions, secrets, database, providers, domain, and deployment.
 - [ ] A product can be exported to a standalone repository.
 - [ ] Factory packages are versioned; generated products record their factory version.
-- [ ] Upgrade and conflict behavior is documented and tested.
+- [x] Upgrade and conflict behavior is documented and covered by the [upgrade engine tests](../tooling/forge-cli/src/upgrade-product.test.ts).
 
 ## G2 — Identity and tenancy
 

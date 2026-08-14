@@ -1,6 +1,6 @@
 {
   "name": "saasforge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A secure, reusable factory for launching and operating SaaS products.",
   "packageManager": "pnpm@10.28.2",
@@ -23,6 +23,7 @@
     "format:check": "prettier --check .",
     "license:check": "node tooling/security/license-check.mjs",
     "forge:create": "pnpm --filter @saasforge/forge-cli run create",
+    "forge:upgrade": "pnpm --filter @saasforge/forge-cli run upgrade",
     "factory:doctor": "pnpm --filter @saasforge/forge-cli run doctor",
     "factory:setup": "pnpm --filter @saasforge/forge-cli run setup",
     "clean": "turbo run clean"

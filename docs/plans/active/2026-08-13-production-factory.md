@@ -26,7 +26,7 @@ Start with `docs/vision.md`, `docs/production-readiness.md`, and `docs/context-m
 
 - [x] Remove SignalDesk and its shared-schema residue.
 - [x] Define product vision, context routing, provider policy, and measurable readiness gates.
-- [ ] Rebuild generator around product manifests, schema ownership, standalone export, and upgrades. Standalone generation is proven; upgrade workflow remains.
+- [x] Rebuild generator around product manifests, schema ownership, standalone export, and upgrades.
 - [ ] Complete production capability contracts and recommended implementations.
 - [ ] Add setup/doctor, deployment, operations, recovery, and release automation.
 - [ ] Add security, accessibility, performance, supply-chain, and compatibility gates.
@@ -60,6 +60,7 @@ All applicable items in `docs/production-readiness.md` are checked with evidence
 - 2026-08-13: Added MIT licensing, contribution/conduct/security policies, ownership, issue/PR templates, changelog, and a release process for the public repository.
 - 2026-08-13: Added least-privilege, commit-pinned CI for CodeQL, secret scanning, high-severity dependency audit, and an explicit production-license allowlist; generated repositories inherit equivalent gates.
 - 2026-08-13: Pinned the supported Node runtime and taught generated repositories to carry the same runtime and license policy.
+- 2026-08-14: Added a dry-run-first three-way product upgrader with disjoint-tree and link safety, conflict-free transactional application, downgrade prevention, exact rollback tests, and manifest-last version advancement.
 
 ## Recovery
 

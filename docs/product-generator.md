@@ -35,3 +35,13 @@ Before considering a generated product ready for feature work:
 7. When jobs are enabled, replace the example task body, configure a product-owned Inngest app, and exercise success, retry, terminal failure, replay, and backlog alerts.
 
 Generated validation products are disposable. The reusable source of truth is the generator, templates, capability contracts, tests, and documentation. Product-specific database models must never be added to the factory's shared schema.
+
+## Upgrade a generated product
+
+From the target factory checkout, inspect a standalone product without changing it:
+
+```bash
+pnpm forge:upgrade -- --product "C:/path/to/my-product"
+```
+
+The command regenerates the product's recorded blueprint in a temporary directory and makes a three-way comparison with its stored fingerprints. Add `--apply` only after reviewing the plan. It refuses invalid manifests, products inside the factory checkout, unsafe managed paths, and conflicting edits. It never installs dependencies, applies migrations, or changes unmanaged files, lockfiles, or local environment files.
