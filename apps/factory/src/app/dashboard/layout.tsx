@@ -12,26 +12,49 @@ export default async function DashboardLayout({
 }) {
   const session = await requireSession();
   const membership = await getPrimaryMembership(session.user.id);
+  const workspaceName = membership?.organization.name ?? "Workspace pending";
+  const workspaceRole = membership?.role ?? "No role";
 
   return (
     <div className="dashboard-shell">
+      <a className="dashboard-skip-link" href="#dashboard-main">
+        Skip to dashboard content
+      </a>
       <aside className="dashboard-sidebar">
-        <Link className="brand" href="/">
-          <span aria-hidden="true" className="forge-mark">
-            SF
+        <div className="dashboard-sidebar-topline">
+          <Link className="dashboard-brand" href="/">
+            <span aria-hidden="true" className="dashboard-brand-mark">
+              <span>SF</span>
+            </span>
+            <span>
+              <strong>{factoryConfig.name}</strong>
+              <small>Private factory</small>
+            </span>
+          </Link>
+          <span className="dashboard-environment">
+            <i aria-hidden="true" /> Local control
           </span>
-          <span>{factoryConfig.name}</span>
-        </Link>
-        <DashboardNav />
+        </div>
+        <DashboardNav
+          workspaceName={workspaceName}
+          workspaceRole={workspaceRole}
+        />
         <div className="sidebar-footer">
-          <span>Private workspace</span>
-          <strong>
-            {membership?.organization.name ?? "Workspace pending"}
-          </strong>
-          <small>{membership?.role ?? "No role"}</small>
+          <span className="sidebar-footer-label">Current workspace</span>
+          <div>
+            <span aria-hidden="true" className="workspace-avatar">
+              {workspaceName.charAt(0).toUpperCase()}
+            </span>
+            <span className="workspace-copy">
+              <strong>{workspaceName}</strong>
+              <small>{workspaceRole}</small>
+            </span>
+          </div>
         </div>
       </aside>
-      <main className="dashboard-main">{children}</main>
+      <main className="dashboard-main" id="dashboard-main">
+        {children}
+      </main>
     </div>
   );
 }

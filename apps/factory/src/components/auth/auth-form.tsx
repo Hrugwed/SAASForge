@@ -14,6 +14,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const isSignUp = mode === "sign-up";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -78,24 +79,53 @@ export function AuthForm({ mode }: AuthFormProps) {
         />
       </label>
 
-      <label>
-        <span>Password</span>
-        <input
-          autoComplete={isSignUp ? "new-password" : "current-password"}
-          maxLength={128}
-          minLength={12}
-          name="password"
-          placeholder={isSignUp ? "At least 12 characters" : "Your password"}
-          required
-          type="password"
-        />
-      </label>
+      <div className="auth-password-group">
+        <label htmlFor="auth-password">Password</label>
+        <span className="auth-password-field">
+          <input
+            aria-describedby="password-hint"
+            autoComplete={isSignUp ? "new-password" : "current-password"}
+            id="auth-password"
+            maxLength={128}
+            minLength={12}
+            name="password"
+            placeholder={isSignUp ? "At least 12 characters" : "Your password"}
+            required
+            type={passwordVisible ? "text" : "password"}
+          />
+          <button
+            aria-label={passwordVisible ? "Hide password" : "Show password"}
+            aria-pressed={passwordVisible}
+            className="auth-password-toggle"
+            onClick={() => setPasswordVisible((visible) => !visible)}
+            type="button"
+          >
+            {passwordVisible ? "HIDE" : "SHOW"}
+          </button>
+        </span>
+      </div>
 
-      <div aria-live="polite" className="auth-message">
+      <span className="auth-password-hint" id="password-hint">
+        {isSignUp
+          ? "Use at least 12 characters."
+          : "Your password is never displayed by default."}
+      </span>
+
+      <div
+        aria-atomic="true"
+        aria-live="polite"
+        className="auth-message"
+        role="status"
+      >
         {error}
       </div>
 
-      <Button disabled={pending} size="lg" type="submit">
+      <Button
+        className="auth-submit"
+        disabled={pending}
+        size="lg"
+        type="submit"
+      >
         {pending
           ? "Please wait..."
           : isSignUp

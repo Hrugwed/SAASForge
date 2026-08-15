@@ -17,12 +17,14 @@ export function SignOutButton() {
 
   return (
     <button
+      aria-busy={pending}
       className="sign-out-button"
       disabled={pending}
       onClick={signOut}
       type="button"
     >
-      {pending ? "Signing out..." : "Sign out"}
+      <span>{pending ? "Signing out..." : "Sign out"}</span>
+      <span aria-hidden="true">↗</span>
     </button>
   );
 }
