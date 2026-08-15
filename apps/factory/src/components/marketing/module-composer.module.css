@@ -1,0 +1,304 @@
+.composer {
+  --composer-background: var(--forge-panel, #161815);
+  --composer-foreground: var(--forge-cream, #f7f5ed);
+  --composer-muted: var(--forge-muted, #a7aa9f);
+  --composer-line: var(--forge-line, rgba(255, 255, 255, 0.14));
+  --composer-accent: var(--forge-orange, #ff5a36);
+  --composer-lime: var(--forge-lime, #d9ff43);
+  --composer-ink: var(--forge-bg, #10120f);
+  color: var(--composer-foreground);
+}
+
+.selector legend,
+.selectorHint,
+.windowBar,
+.commandBlock > div,
+.repository,
+.moduleIndex,
+.moduleStatus {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: start;
+  margin-top: clamp(42px, 5vw, 68px);
+}
+
+.selector {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.selector legend {
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.selectorHint {
+  margin: 11px 0 19px;
+  color: var(--composer-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.moduleList {
+  display: grid;
+  border-top: 1px solid var(--composer-line);
+}
+
+.moduleButton {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--composer-line);
+  background: transparent;
+  padding: 18px 0;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    padding 160ms ease;
+}
+
+.moduleButton:hover {
+  background: color-mix(in srgb, var(--composer-foreground) 5%, transparent);
+  padding-inline: 10px;
+}
+
+.moduleButton:focus-visible {
+  outline: 2px solid var(--composer-lime);
+  outline-offset: 4px;
+}
+
+.moduleButtonSelected .moduleIndex,
+.moduleButtonSelected .moduleStatus {
+  color: var(--composer-lime);
+}
+
+.moduleIndex,
+.moduleStatus {
+  padding-top: 3px;
+  color: var(--composer-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.moduleStatus {
+  white-space: nowrap;
+}
+
+.moduleCopy {
+  display: grid;
+  gap: 5px;
+}
+
+.moduleCopy strong {
+  font-size: 17px;
+  letter-spacing: -0.03em;
+}
+
+.moduleCopy span {
+  color: var(--composer-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.output {
+  display: grid;
+  gap: 14px;
+}
+
+.window,
+.commandBlock {
+  border: 1px solid var(--composer-line);
+  background: color-mix(in srgb, var(--composer-background) 92%, black);
+}
+
+.window {
+  overflow: hidden;
+  box-shadow: 14px 14px 0
+    color-mix(in srgb, var(--composer-accent) 58%, transparent);
+}
+
+.windowBar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 46px;
+  border-bottom: 1px solid var(--composer-line);
+  padding: 0 14px;
+  color: var(--composer-muted);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+
+.windowBar > span:last-child {
+  color: var(--composer-lime);
+}
+
+.windowDots {
+  display: flex;
+  gap: 5px;
+}
+
+.windowDots i {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--composer-muted);
+}
+
+.windowDots i:first-child {
+  background: var(--composer-accent);
+}
+
+.repository {
+  min-height: 330px;
+  padding: 22px;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.repoRoot {
+  color: var(--composer-lime);
+  font-weight: 700;
+}
+
+.repoRoot span {
+  margin-right: 8px;
+  color: var(--composer-accent);
+}
+
+.repository ul {
+  display: grid;
+  gap: 2px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.repository li {
+  padding-left: 18px;
+  color: var(--composer-muted);
+  animation: reveal 190ms ease both;
+}
+
+.repository li span {
+  display: inline-block;
+  width: 14px;
+  color: var(--composer-accent);
+}
+
+.commandBlock {
+  display: grid;
+  gap: 13px;
+  padding: 17px 18px;
+}
+
+.commandBlock > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--composer-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.commandBlock strong {
+  color: var(--composer-lime);
+  font: inherit;
+}
+
+.commandBlock code {
+  overflow-x: auto;
+  color: var(--composer-foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: nowrap;
+}
+
+.commandBlock code span {
+  color: var(--composer-accent);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 820px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .repository {
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .moduleButton {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .moduleStatus {
+    grid-column: 2;
+    padding-top: 0;
+  }
+
+  .windowBar {
+    grid-template-columns: auto 1fr;
+  }
+
+  .windowBar > span:last-child {
+    display: none;
+  }
+
+  .repository {
+    padding: 17px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moduleButton,
+  .repository li {
+    animation: none;
+    transition: none;
+  }
+}

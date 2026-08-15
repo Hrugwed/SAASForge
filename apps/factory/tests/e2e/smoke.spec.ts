@@ -9,10 +9,13 @@ test("private factory access, module visibility, and dashboard protection", asyn
 
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "proven foundations",
+    "Start with the idea",
   );
 
-  await page.getByRole("link", { name: "Enter your factory" }).click();
+  await page
+    .getByRole("link", { name: "Open private factory" })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Welcome back",
