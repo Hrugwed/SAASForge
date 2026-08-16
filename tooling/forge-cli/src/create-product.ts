@@ -1,90 +1,38 @@
 import {
   cp,
+  lstat,
   mkdir,
+  open,
   readFile,
   readdir,
+  realpath,
+  rename,
   rm,
   stat,
+  unlink,
   writeFile,
+  type FileHandle,
 } from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { format } from "prettier";
-import { z } from "zod";
+import {
+  createProductInputSchema,
+  productRegistrySchema,
+  resolveProductPackages,
+  supportedModules,
+  type CreateProductInput,
+  type GenerationManifest,
+  type ProductPackage,
+  type ProductRegistryEntry,
+} from "./product-contract";
 
-export const supportedModules = [
-  "auth",
-  "billing",
-  "email",
-  "analytics",
-  "jobs",
-  "storage",
-] as const;
-
-export const createProductInputSchema = z
-  .object({
-    name: z.string().trim().min(2).max(60),
-    slug: z.string().regex(/^[a-z][a-z0-9-]{1,39}$/),
-    description: z.string().trim().min(20).max(180),
-    modules: z.array(z.enum(supportedModules)).max(supportedModules.length),
-  })
-  .superRefine((input, context) => {
-    if (input.modules.includes("billing") && !input.modules.includes("auth")) {
-      context.addIssue({
-        code: "custom",
-        message: "The billing module requires the auth module.",
-        path: ["modules"],
-      });
-    }
-    for (const tenantModule of ["jobs", "storage"] as const) {
-      if (
-        input.modules.includes(tenantModule) &&
-        !input.modules.includes("auth")
-      ) {
-        context.addIssue({
-          code: "custom",
-          message: `The ${tenantModule} module requires the auth module for tenant ownership.`,
-          path: ["modules"],
-        });
-      }
-    }
-  });
-
-export type CreateProductInput = z.infer<typeof createProductInputSchema>;
-
-type ProductRegistryEntry = CreateProductInput & {
-  createdAt: string;
-  status: "generated";
-  mode: "standalone";
-  relativePath: string;
-};
-
-export type GenerationManifest = {
-  schemaVersion: 2;
-  factory: { name: "SaaSForge"; version: string; templateVersion: 2 };
-  product: CreateProductInput;
-  outputMode: "standalone";
-  generatedAt: string;
-  ownership: {
-    application: "apps/web";
-    database: "packages/database/prisma/schema.prisma" | null;
-    environment: "apps/web/.env.local";
-  };
-  managedFiles: Record<string, string>;
-};
-
-const packageDependencies = {
-  config: [],
-  ui: [],
-  observability: [],
-  analytics: [],
-  email: [],
-  database: [],
-  auth: ["database", "email"],
-  billing: ["database"],
-  jobs: [],
-  storage: [],
-} as const;
+export {
+  createProductInputSchema,
+  supportedModules,
+  type CreateProductInput,
+  type GenerationManifest,
+} from "./product-contract";
 
 const capabilityDocumentation = {
   auth: ["database-auth.md", "email.md", "privacy-operations.md"],
@@ -93,8 +41,6 @@ const capabilityDocumentation = {
   jobs: ["jobs.md"],
   storage: ["storage.md"],
 } as const;
-
-type FactoryPackage = keyof typeof packageDependencies;
 
 function assertInside(parent: string, target: string): void {
   const relative = path.relative(parent, target);
@@ -205,19 +151,6 @@ async function fingerprintManagedFiles(
       left.localeCompare(right),
     ),
   );
-}
-
-function selectedPackages(
-  modules: CreateProductInput["modules"],
-): FactoryPackage[] {
-  const selected = new Set<FactoryPackage>(["config", "observability", "ui"]);
-  const visit = (name: FactoryPackage) => {
-    if (selected.has(name)) return;
-    selected.add(name);
-    for (const dependency of packageDependencies[name]) visit(dependency);
-  };
-  for (const moduleName of modules) visit(moduleName);
-  return [...selected].sort();
 }
 
 function copyFilter(source: string): boolean {
@@ -431,7 +364,7 @@ async function writeRepositoryFiles(
   target: string,
   input: CreateProductInput,
   factoryVersion: string,
-  packages: FactoryPackage[],
+  packages: ProductPackage[],
   generatedAt: string,
 ): Promise<void> {
   const hasDatabase = packages.includes("database");
@@ -558,22 +491,280 @@ async function updateRegistry(
     "generated",
     "products.json",
   );
-  await mkdir(path.dirname(registryPath), { recursive: true });
-  const registry = (await exists(registryPath))
-    ? (JSON.parse(
-        await readFile(registryPath, "utf8"),
-      ) as ProductRegistryEntry[])
-    : [];
-  if (registry.some((product) => product.slug === entry.slug)) {
-    throw new Error(`Product registry already contains ${entry.slug}.`);
-  }
-  registry.push(entry);
-  registry.sort((left, right) => left.slug.localeCompare(right.slug));
-  await writeFile(
+  const registryDirectory = path.dirname(registryPath);
+  await ensureSafeDirectoryTree(root, registryDirectory);
+  const releaseRegistryLock = await acquireRegistryLock(
+    root,
+    registryDirectory,
     registryPath,
-    `${JSON.stringify(registry, null, 2)}\n`,
-    "utf8",
   );
+  try {
+    const registryInfo = await lstat(registryPath).catch((error: unknown) => {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT")
+        return null;
+      throw error;
+    });
+    let registry: ProductRegistryEntry[] = [];
+    if (registryInfo) {
+      if (
+        registryInfo.isSymbolicLink() ||
+        !registryInfo.isFile() ||
+        registryInfo.nlink > 1
+      ) {
+        throw new Error(
+          "The product registry must be an isolated regular file.",
+        );
+      }
+      const handle = await open(registryPath, "r");
+      try {
+        const openedInfo = await handle.stat();
+        if (
+          openedInfo.ino !== registryInfo.ino ||
+          (process.platform !== "win32" &&
+            openedInfo.dev !== registryInfo.dev) ||
+          !openedInfo.isFile() ||
+          openedInfo.nlink > 1
+        ) {
+          throw new Error("The product registry changed during inspection.");
+        }
+        registry = productRegistrySchema.parse(
+          JSON.parse(await handle.readFile("utf8")) as unknown,
+        );
+      } finally {
+        await handle.close();
+      }
+    }
+    if (registry.some((product) => product.slug === entry.slug)) {
+      throw new Error(`Product registry already contains ${entry.slug}.`);
+    }
+    registry.push(entry);
+    registry.sort((left, right) => left.slug.localeCompare(right.slug));
+    const temporaryPath = `${registryPath}.${process.pid}.${randomUUID()}.tmp`;
+    try {
+      await writeFile(temporaryPath, `${JSON.stringify(registry, null, 2)}\n`, {
+        encoding: "utf8",
+        flag: "wx",
+        mode: 0o600,
+      });
+      await ensureSafeDirectoryTree(root, registryDirectory);
+      await rename(temporaryPath, registryPath);
+    } finally {
+      await unlink(temporaryPath).catch((error: unknown) => {
+        if (!(
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "ENOENT"
+        )) {
+          throw error;
+        }
+      });
+    }
+  } finally {
+    await releaseRegistryLock();
+  }
+}
+
+async function acquireRegistryLock(
+  repositoryRoot: string,
+  registryDirectory: string,
+  registryPath: string,
+): Promise<() => Promise<void>> {
+  const lockPath = `${registryPath}.lock`;
+  const deadline = Date.now() + 10_000;
+  let handle: FileHandle | undefined;
+
+  while (!handle) {
+    try {
+      handle = await open(lockPath, "wx", 0o600);
+    } catch (error) {
+      if (!(
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "EEXIST"
+      )) {
+        throw error;
+      }
+      const lockInfo = await lstat(lockPath).catch((lockError: unknown) => {
+        if (
+          lockError instanceof Error &&
+          "code" in lockError &&
+          lockError.code === "ENOENT"
+        ) {
+          return null;
+        }
+        throw lockError;
+      });
+      if (!lockInfo) continue;
+      if (
+        lockInfo.isSymbolicLink() ||
+        !lockInfo.isFile() ||
+        lockInfo.nlink > 1
+      ) {
+        throw new Error("The product registry lock is unsafe.");
+      }
+      if (Date.now() >= deadline) {
+        throw new Error(
+          "Timed out waiting for the product registry lock. Remove a stale products.json.lock only after confirming no generator is running.",
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
+
+  const openedInfo = await handle.stat();
+  let released = false;
+  return async () => {
+    if (released) return;
+    released = true;
+    await handle.close();
+    await ensureSafeDirectoryTree(repositoryRoot, registryDirectory);
+    const lockInfo = await lstat(lockPath).catch((error: unknown) => {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT")
+        return null;
+      throw error;
+    });
+    if (
+      !lockInfo ||
+      lockInfo.isSymbolicLink() ||
+      !lockInfo.isFile() ||
+      lockInfo.nlink > 1 ||
+      lockInfo.ino !== openedInfo.ino
+    ) {
+      throw new Error("The product registry lock changed before release.");
+    }
+    await unlink(lockPath);
+  };
+}
+
+async function ensureSafeDirectoryTree(
+  repositoryRoot: string,
+  directory: string,
+): Promise<void> {
+  const resolvedRoot = path.resolve(repositoryRoot);
+  const resolvedDirectory = path.resolve(directory);
+  const relative = path.relative(resolvedRoot, resolvedDirectory);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error("The registry directory escaped the factory repository.");
+  }
+
+  let cursor = resolvedRoot;
+  for (const segment of relative.split(path.sep).filter(Boolean)) {
+    cursor = path.join(cursor, segment);
+    await mkdir(cursor).catch((error: unknown) => {
+      if (!(
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "EEXIST"
+      )) {
+        throw error;
+      }
+    });
+    const info = await lstat(cursor);
+    if (info.isSymbolicLink() || !info.isDirectory()) {
+      throw new Error("The registry directory must not contain links.");
+    }
+  }
+
+  const [realRoot, realDirectory] = await Promise.all([
+    realpath(resolvedRoot),
+    realpath(resolvedDirectory),
+  ]);
+  if (realDirectory !== path.join(realRoot, relative)) {
+    throw new Error("The registry directory escaped the factory repository.");
+  }
+}
+
+async function assertSafeProductsRoot(
+  repositoryRoot: string,
+  productsRoot: string,
+): Promise<void> {
+  const info = await lstat(productsRoot);
+  if (info.isSymbolicLink() || !info.isDirectory()) {
+    throw new Error("The products root must be a real directory, not a link.");
+  }
+
+  const [realRepositoryRoot, realProductsRoot] = await Promise.all([
+    realpath(repositoryRoot),
+    realpath(productsRoot),
+  ]);
+  if (realProductsRoot !== path.join(realRepositoryRoot, "products")) {
+    throw new Error("The products root escaped the factory repository.");
+  }
+}
+
+async function acquireProductCreationLock(
+  repositoryRoot: string,
+  productsRoot: string,
+  target: string,
+): Promise<() => Promise<void>> {
+  const lockPath = path.join(
+    productsRoot,
+    `.${path.basename(target)}.create.lock`,
+  );
+  const deadline = Date.now() + 10_000;
+  let handle: FileHandle | undefined;
+
+  while (!handle) {
+    try {
+      handle = await open(lockPath, "wx", 0o600);
+    } catch (error) {
+      if (!(
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "EEXIST"
+      )) {
+        throw error;
+      }
+      const lockInfo = await lstat(lockPath).catch((lockError: unknown) => {
+        if (
+          lockError instanceof Error &&
+          "code" in lockError &&
+          lockError.code === "ENOENT"
+        ) {
+          return null;
+        }
+        throw lockError;
+      });
+      if (!lockInfo) continue;
+      if (
+        lockInfo.isSymbolicLink() ||
+        !lockInfo.isFile() ||
+        lockInfo.nlink > 1
+      ) {
+        throw new Error("The product creation lock is unsafe.");
+      }
+      if (Date.now() >= deadline) {
+        throw new Error(
+          "Timed out waiting for product creation. Remove a stale creation lock only after confirming no generator is running.",
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
+
+  const openedInfo = await handle.stat();
+  let released = false;
+  return async () => {
+    if (released) return;
+    released = true;
+    await handle.close();
+    await assertSafeProductsRoot(repositoryRoot, productsRoot);
+    const lockInfo = await lstat(lockPath).catch((error: unknown) => {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT")
+        return null;
+      throw error;
+    });
+    if (
+      !lockInfo ||
+      lockInfo.isSymbolicLink() ||
+      !lockInfo.isFile() ||
+      lockInfo.nlink > 1 ||
+      lockInfo.ino !== openedInfo.ino
+    ) {
+      throw new Error("The product creation lock changed before release.");
+    }
+    await unlink(lockPath);
+  };
 }
 
 export async function composeProduct(
@@ -605,7 +796,7 @@ export async function composeProduct(
     "saas-product",
   );
   const appTarget = path.join(target, "apps", "web");
-  const packages = selectedPackages(input.modules);
+  const packages = resolveProductPackages(input.modules);
 
   try {
     await mkdir(path.dirname(appTarget), { recursive: true });
@@ -759,8 +950,18 @@ export async function createProduct(
   const target = path.resolve(productsRoot, input.slug);
   assertInside(productsRoot, target);
   await mkdir(productsRoot, { recursive: true });
-  return composeProduct(repositoryRoot, input, target, {
-    now: options.now,
-    updateRegistry: true,
-  });
+  await assertSafeProductsRoot(repositoryRoot, productsRoot);
+  const releaseCreationLock = await acquireProductCreationLock(
+    repositoryRoot,
+    productsRoot,
+    target,
+  );
+  try {
+    return await composeProduct(repositoryRoot, input, target, {
+      now: options.now,
+      updateRegistry: true,
+    });
+  } finally {
+    await releaseCreationLock();
+  }
 }

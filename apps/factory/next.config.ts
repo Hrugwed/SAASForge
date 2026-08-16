@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     "@saasforge/auth",
     "@saasforge/config",
     "@saasforge/database",
+    "@saasforge/forge-cli",
     "@saasforge/ui",
   ],
   async headers() {

@@ -6,6 +6,7 @@ Use this index to load only the documentation needed for a task.
 | ---------------------------- | ------------------------------- | --------------------------------------------- |
 | Understand the product       | `docs/vision.md`                | `docs/production-readiness.md`                |
 | Change system boundaries     | `docs/architecture.md`          | `docs/decisions/` and affected package        |
+| Change the factory dashboard | `docs/control-plane.md`         | `apps/factory` and `tooling/forge-cli`        |
 | Generate or export a product | `docs/product-generator.md`     | `tooling/forge-cli`, `templates/saas-product` |
 | Change identity or tenancy   | `docs/database-auth.md`         | `packages/auth`, `packages/database`          |
 | Change payments or access    | `docs/billing.md`               | `packages/billing`, webhook tests             |

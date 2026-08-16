@@ -13,11 +13,12 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { composeProduct } from "./create-product";
 import {
-  composeProduct,
-  createProductInputSchema,
+  assertGenerationManifest,
+  compareSemanticVersions,
   type GenerationManifest,
-} from "./create-product";
+} from "./product-contract";
 
 type Action =
   "added" | "updated" | "removed" | "preserved" | "unchanged" | "conflicts";
@@ -46,68 +47,6 @@ function isInside(parent: string, target: string): boolean {
   return (
     !relative || (!relative.startsWith("..") && !path.isAbsolute(relative))
   );
-}
-
-function assertSafeRelativePath(
-  relative: string,
-  label: string,
-  options: { excludeSecrets?: boolean } = {},
-): void {
-  const normalized = relative.replaceAll("\\", "/");
-  const basename = path.posix.basename(normalized);
-  if (
-    !relative ||
-    normalized !== relative ||
-    path.isAbsolute(relative) ||
-    normalized
-      .split("/")
-      .some((part) => !part || part === "." || part === "..") ||
-    (options.excludeSecrets &&
-      (["pnpm-lock.yaml", "saasforge.manifest.json"].includes(relative) ||
-        (basename !== ".env.example" && /^\.env(?:\..+)?$/.test(basename))))
-  ) {
-    throw new Error(`Manifest contains an unsafe ${label} path: ${relative}`);
-  }
-}
-
-function assertManifest(value: unknown): asserts value is GenerationManifest {
-  if (!value || typeof value !== "object")
-    throw new Error("Product manifest is invalid.");
-  const manifest = value as Partial<GenerationManifest>;
-  const generatedAt =
-    typeof manifest.generatedAt === "string"
-      ? new Date(manifest.generatedAt)
-      : null;
-  if (
-    manifest.schemaVersion !== 2 ||
-    manifest.factory?.name !== "SaaSForge" ||
-    typeof manifest.factory?.version !== "string" ||
-    !manifest.factory.version.trim() ||
-    manifest.factory.templateVersion !== 2 ||
-    manifest.outputMode !== "standalone" ||
-    !generatedAt ||
-    !Number.isFinite(generatedAt.getTime()) ||
-    generatedAt.toISOString() !== manifest.generatedAt ||
-    manifest.ownership?.application !== "apps/web" ||
-    manifest.ownership.environment !== "apps/web/.env.local" ||
-    ![null, "packages/database/prisma/schema.prisma"].includes(
-      manifest.ownership.database,
-    ) ||
-    !manifest.product ||
-    !manifest.managedFiles ||
-    typeof manifest.managedFiles !== "object" ||
-    Array.isArray(manifest.managedFiles)
-  ) {
-    throw new Error(
-      "Product manifest is not a supported SaaSForge v2 standalone manifest.",
-    );
-  }
-  createProductInputSchema.parse(manifest.product);
-  for (const [relative, hash] of Object.entries(manifest.managedFiles)) {
-    assertSafeRelativePath(relative, "managed file", { excludeSecrets: true });
-    if (!/^[a-f0-9]{64}$/.test(hash))
-      throw new Error(`Manifest has an invalid fingerprint for ${relative}.`);
-  }
 }
 
 async function fileHash(
@@ -212,41 +151,6 @@ async function writeAtomically(
   }
 }
 
-function parseSemver(version: string): [number, number, number, string | null] {
-  const match =
-    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/.exec(
-      version,
-    );
-  if (!match)
-    throw new Error(
-      `Factory version is not valid semantic version: ${version}`,
-    );
-  return [
-    Number(match[1]),
-    Number(match[2]),
-    Number(match[3]),
-    match[4] ?? null,
-  ];
-}
-
-function compareSemver(left: string, right: string): number {
-  const [leftMajor, leftMinor, leftPatch, leftPrerelease] = parseSemver(left);
-  const [rightMajor, rightMinor, rightPatch, rightPrerelease] =
-    parseSemver(right);
-  for (const index of [0, 1, 2] as const) {
-    const difference =
-      [leftMajor, leftMinor, leftPatch][index] -
-      [rightMajor, rightMinor, rightPatch][index];
-    if (difference) return Math.sign(difference);
-  }
-  if (leftPrerelease === rightPrerelease) return 0;
-  if (leftPrerelease === null) return 1;
-  if (rightPrerelease === null) return -1;
-  return leftPrerelease.localeCompare(rightPrerelease, undefined, {
-    numeric: true,
-  });
-}
-
 export async function upgradeProduct(
   factoryRoot: string,
   productPath: string,
@@ -264,7 +168,7 @@ export async function upgradeProduct(
   }
   const manifestPath = path.join(product, "saasforge.manifest.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as unknown;
-  assertManifest(manifest);
+  assertGenerationManifest(manifest);
 
   const stagingRoot = await mkdtemp(path.join(tmpdir(), "saasforge-upgrade-"));
   const stagedProduct = path.join(stagingRoot, "product");
@@ -278,8 +182,10 @@ export async function upgradeProduct(
       },
     );
     if (
-      compareSemver(target.manifest.factory.version, manifest.factory.version) <
-      0
+      compareSemanticVersions(
+        target.manifest.factory.version,
+        manifest.factory.version,
+      ) < 0
     ) {
       throw new Error(
         `Refusing factory downgrade from ${manifest.factory.version} to ${target.manifest.factory.version}.`,

@@ -36,6 +36,8 @@ Stripe Price IDs are mapped from internal plan keys in server configuration; the
 
 The factory and every product are separate operational boundaries. The factory controls source packages, templates, playbooks, and private planning. A product receives its own environment file, Stripe account configuration, database, deployment, legal copy, and customer-facing application routes.
 
+The authenticated factory control plane dynamically reconciles its bounded local registry with each generated v2 manifest. It returns a minimal operator view of product identity, selected modules, version drift, and expected repository artifacts. It never returns absolute paths, secrets, managed-file hashes, or customer data, and it does not execute product-controlled commands through HTTP. Hosted access is scoped to a server-configured operator organization; loopback development permits a local workspace owner. See `docs/control-plane.md`.
+
 Authentication is verified in server-side data access functions and again near sensitive reads or mutations. Route proxies may improve navigation but are never the only authorization control. Every tenant-owned table carries an `organizationId`, and every query must scope by both the authenticated user membership and organization.
 
 ## Environments

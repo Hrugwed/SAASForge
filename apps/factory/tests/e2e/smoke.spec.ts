@@ -86,7 +86,11 @@ test("private factory access, module visibility, and dashboard protection", asyn
   }
   await expect(
     page.getByRole("region", { name: "Factory snapshot" }),
-  ).toContainText("Evidence scope");
+  ).toContainText("Factory version");
+  await expect(page.getByText("Fresh registry read")).toBeVisible();
+  await expect(
+    page.getByText("Inventory here. Production data there."),
+  ).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
   await navigateFactory(
@@ -104,6 +108,9 @@ test("private factory access, module visibility, and dashboard protection", asyn
       .getByText("GENERATOR STANDING BY")
       .or(page.getByRole("region", { name: "Generated products" })),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /create|upgrade|deploy/i }),
+  ).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
   await navigateFactory(page, testInfo.project.name, "Modules");

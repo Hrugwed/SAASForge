@@ -114,7 +114,7 @@ export function ModuleComposer() {
   const command = useMemo(() => {
     const moduleList = selectedModules.map((module) => module.id).join(",");
 
-    return `pnpm forge:create -- --name "next-product" --modules "${moduleList}"`;
+    return `pnpm forge:create -- --name "Next Product" --slug "next-product" --description "A validated customer outcome." --modules "${moduleList}"`;
   }, [selectedModules]);
 
   function toggleModule(id: ModuleId) {

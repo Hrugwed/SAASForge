@@ -1,19 +1,8 @@
 import Link from "next/link";
 import { Button, Card, Container } from "@saasforge/ui";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import products from "@/generated/products.json";
+import { getControlPlaneSnapshot } from "@/lib/control-plane";
 import "./products.css";
-
-type ProductRegistryItem = {
-  name: string;
-  slug: string;
-  description: string;
-  modules: string[];
-  createdAt: string;
-  status: string;
-};
-
-const productRegistry: ProductRegistryItem[] = products;
 
 export const metadata = {
   title: "Products",
@@ -33,8 +22,8 @@ const generationSteps = [
   },
   {
     number: "03",
-    title: "Prove the foundation",
-    detail: "Run setup, diagnostics, quality checks, and browser journeys.",
+    title: "Inspect the evidence",
+    detail: "The control plane reconciles the registry and product manifest.",
   },
 ] as const;
 
@@ -45,16 +34,19 @@ const ownershipBoundaries = [
   ["DEPLOYMENT", "Product-owned"],
 ] as const;
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const snapshot = await getControlPlaneSnapshot();
+
   return (
     <Container className="dashboard-container products-container">
       <header className="dashboard-header">
         <div>
-          <p>PRODUCT REGISTRY</p>
-          <h1>Independent products, one maintained factory.</h1>
+          <p>FRESH PRODUCT REGISTRY READ</p>
+          <h1>Independent products, reconciled locally.</h1>
           <span>
-            Generated products share source packages while owning their design,
-            secrets, database, billing configuration, and deployment.
+            Each record is validated against its generated manifest and expected
+            repository artifacts. Runtime and production evidence remain
+            product-owned.
           </span>
         </div>
         <div className="dashboard-actions">
@@ -65,7 +57,30 @@ export default function ProductsPage() {
         </div>
       </header>
 
-      {productRegistry.length === 0 ? (
+      {snapshot.issues.length > 0 ? (
+        <section
+          className="registry-issues"
+          aria-labelledby="registry-issues-title"
+        >
+          <div>
+            <span>REGISTRY ATTENTION</span>
+            <h2 id="registry-issues-title">
+              {snapshot.issues.length} bounded registry issue
+              {snapshot.issues.length === 1 ? "" : "s"}
+            </h2>
+          </div>
+          <ul>
+            {snapshot.issues.map((issue, index) => (
+              <li key={`${issue.code}-${index}`}>
+                <strong>{issue.code.replaceAll("-", " ")}</strong>
+                <span>{issue.message}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {snapshot.products.length === 0 ? (
         <section
           aria-labelledby="first-product-title"
           className="product-empty-workspace"
@@ -77,7 +92,7 @@ export default function ProductsPage() {
                 Forge the first standalone product.
               </h2>
               <p>
-                Start after the idea is validated. SaaSForge will compose the
+                Start after the idea is validated. SaaSForge composes the
                 repeatable foundation; the product still owns its customer
                 workflow, brand, providers, and launch decision.
               </p>
@@ -99,7 +114,10 @@ export default function ProductsPage() {
                   <Link href="/dashboard/modules">Inspect capabilities</Link>
                 </Button>
                 <code>
-                  pnpm forge:create -- --name &quot;Next Product&quot;
+                  pnpm forge:create -- --name &quot;Next Product&quot; --slug
+                  &quot;next-product&quot; --description &quot;A validated
+                  customer outcome described clearly.&quot; --modules
+                  &quot;auth&quot;
                 </code>
               </div>
             </div>
@@ -163,22 +181,57 @@ export default function ProductsPage() {
           className="product-registry-grid"
           aria-label="Generated products"
         >
-          {productRegistry.map((product, index) => (
-            <Card className="product-registry-card" key={product.slug}>
-              <div>
-                <span>{String(index + 1).padStart(2, "0")} / PRODUCT</span>
-                <small>{product.status}</small>
-              </div>
-              <h2>{product.name}</h2>
-              <p>{product.description}</p>
-              <code>{product.slug}/</code>
-              <ul>
-                {product.modules.map((moduleName) => (
-                  <li key={moduleName}>{moduleName}</li>
-                ))}
-              </ul>
-            </Card>
-          ))}
+          {snapshot.products.map((product, index) => {
+            const presentArtifacts = product.artifacts.filter(
+              (artifact) => artifact.state === "present",
+            ).length;
+            return (
+              <Card className="product-registry-card" key={product.slug}>
+                <div className="product-card-status">
+                  <span>{String(index + 1).padStart(2, "0")} / PRODUCT</span>
+                  <small data-state={product.evidenceState}>
+                    {product.identitySource === "manifest-verified"
+                      ? product.evidenceState.replaceAll("-", " ")
+                      : "registry-reported · unverified"}
+                  </small>
+                </div>
+                <h2>{product.name}</h2>
+                <p>{product.description}</p>
+                <dl className="product-evidence-grid">
+                  <div>
+                    <dt>GENERATED WITH</dt>
+                    <dd>{product.generatedWith ?? "Unknown"}</dd>
+                  </div>
+                  <div>
+                    <dt>FACTORY NOW</dt>
+                    <dd>{product.currentFactoryVersion}</dd>
+                  </div>
+                  <div>
+                    <dt>MANAGED FILES</dt>
+                    <dd>{product.managedFileCount ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>ARTIFACTS</dt>
+                    <dd>
+                      {presentArtifacts}/{product.artifacts.length}
+                    </dd>
+                  </div>
+                </dl>
+                <ul className="product-module-list">
+                  {product.modules.length === 0 ? <li>base only</li> : null}
+                  {product.modules.map((moduleName) => (
+                    <li key={moduleName}>{moduleName}</li>
+                  ))}
+                </ul>
+                <footer className="product-card-footer">
+                  <span>{product.inspectionMessage}</span>
+                  <Link href={`/dashboard/products/${product.slug}`}>
+                    Inspect product →
+                  </Link>
+                </footer>
+              </Card>
+            );
+          })}
         </section>
       )}
     </Container>

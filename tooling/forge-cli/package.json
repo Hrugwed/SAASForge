@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./product-contract": "./src/product-contract.ts"
+  },
   "scripts": {
     "create": "tsx src/cli.ts",
     "upgrade": "tsx src/upgrade-cli.ts",

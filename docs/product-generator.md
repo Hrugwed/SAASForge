@@ -8,7 +8,7 @@ Run the generator from the repository root:
 pnpm forge:create -- --name "My Product" --slug "my-product" --description "A clear customer outcome." --modules "auth,billing,email,analytics,jobs,storage"
 ```
 
-Supported modules are `auth`, `billing`, `email`, `analytics`, `jobs`, and `storage`. Billing, jobs, and storage require authentication so tenant ownership is established. The generator validates all input, resolves package dependency closure, prevents directory traversal and accidental replacement, composes the selected templates, and removes partial output if generation fails.
+Supported modules are `auth`, `billing`, `email`, `analytics`, `jobs`, and `storage`. Billing, jobs, and storage require authentication so tenant ownership is established. The generator validates all input, resolves package dependency closure, prevents directory traversal and accidental replacement, composes the selected templates, and removes partial output if generation fails. Successful concurrent generations serialize their registry transaction with an exclusive bounded lock so one product cannot silently erase another registry entry.
 
 The output under `products/<slug>` is a self-contained repository, not a package in the factory workspace. It contains `apps/web`, only the selected reusable capability packages and their dependency closure, root quality tooling, safe `setup`, `doctor`, and managed-file inspection commands, its own database schema and migrations when data capabilities are enabled, product-specific GitHub quality/security/release workflows, Vercel configuration, upgrade and operations runbooks, agent instructions, and `saasforge.manifest.json`. Move that directory to its own Git repository when product work begins.
 

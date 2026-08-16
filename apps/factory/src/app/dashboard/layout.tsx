@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { DashboardNav } from "@/components/factory/dashboard-nav";
 import { factoryConfig } from "@/lib/factory-config";
-import { getPrimaryMembership } from "@/lib/organization";
-import { requireSession } from "@/lib/session";
+import { requireFactoryOperator } from "@/lib/factory-operator";
 import "./dashboard.css";
 
 export default async function DashboardLayout({
@@ -10,10 +9,9 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await requireSession();
-  const membership = await getPrimaryMembership(session.user.id);
-  const workspaceName = membership?.organization.name ?? "Workspace pending";
-  const workspaceRole = membership?.role ?? "No role";
+  const { membership } = await requireFactoryOperator();
+  const workspaceName = membership.organization.name;
+  const workspaceRole = membership.role;
 
   return (
     <div className="dashboard-shell">

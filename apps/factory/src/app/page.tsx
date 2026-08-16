@@ -518,7 +518,11 @@ export default function Home() {
                 Return to top
               </a>
             </div>
-            <code>pnpm forge:create -- --name &quot;Next Product&quot;</code>
+            <code>
+              pnpm forge:create -- --name &quot;Next Product&quot; --slug
+              &quot;next-product&quot; --description &quot;A validated customer
+              outcome.&quot; --modules &quot;auth&quot;
+            </code>
           </Container>
         </section>
       </main>

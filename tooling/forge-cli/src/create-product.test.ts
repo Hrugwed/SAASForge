@@ -5,11 +5,16 @@ import {
   readFile,
   rm,
   stat,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { createProduct, createProductInputSchema } from "./create-product";
+import {
+  createProduct,
+  createProductInputSchema,
+  type CreateProductInput,
+} from "./create-product";
 
 let temporaryRoot: string | undefined;
 
@@ -247,6 +252,131 @@ describe("product generator input", () => {
         "utf8",
       ),
     ).resolves.toContain('"mode": "standalone"');
+  });
+
+  it("rejects a linked products root without writing outside the factory", async () => {
+    const root = await createRepositoryFixture(
+      JSON.stringify({ dependencies: { "@saasforge/config": "workspace:*" } }),
+    );
+    const outside = path.join(root, "outside-products");
+    await mkdir(outside);
+    await symlink(outside, path.join(root, "products"), "junction");
+
+    await expect(
+      createProduct(root, {
+        name: "Linked Product",
+        slug: "linked-product",
+        description:
+          "A product that must never be generated through a linked root.",
+        modules: [],
+      }),
+    ).rejects.toThrow("products root must be a real directory");
+    await expect(
+      stat(path.join(outside, "linked-product")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("rejects a linked registry directory without writing outside the factory", async () => {
+    const root = await createRepositoryFixture(
+      JSON.stringify({ dependencies: { "@saasforge/config": "workspace:*" } }),
+    );
+    const outside = path.join(root, "outside-registry");
+    const registryParent = path.join(root, "apps", "factory", "src");
+    await mkdir(outside);
+    await mkdir(registryParent, { recursive: true });
+    await writeFile(
+      path.join(outside, "products.json"),
+      "outside-registry-sentinel\n",
+    );
+    await symlink(outside, path.join(registryParent, "generated"), "junction");
+
+    await expect(
+      createProduct(root, {
+        name: "Linked Registry Product",
+        slug: "linked-registry-product",
+        description:
+          "A product that must never update a registry through a linked path.",
+        modules: [],
+      }),
+    ).rejects.toThrow("registry directory must not contain links");
+    await expect(
+      readFile(path.join(outside, "products.json"), "utf8"),
+    ).resolves.toBe("outside-registry-sentinel\n");
+    await expect(
+      stat(path.join(root, "products", "linked-registry-product")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("serializes concurrent registry updates without losing a product", async () => {
+    const root = await createRepositoryFixture(
+      JSON.stringify({ dependencies: { "@saasforge/config": "workspace:*" } }),
+    );
+
+    await Promise.all([
+      createProduct(root, {
+        name: "Concurrent Alpha",
+        slug: "concurrent-alpha",
+        description:
+          "The first concurrent product used to verify serialized registry writes.",
+        modules: [],
+      }),
+      createProduct(root, {
+        name: "Concurrent Beta",
+        slug: "concurrent-beta",
+        description:
+          "The second concurrent product used to verify serialized registry writes.",
+        modules: [],
+      }),
+    ]);
+
+    const registry = JSON.parse(
+      await readFile(
+        path.join(root, "apps", "factory", "src", "generated", "products.json"),
+        "utf8",
+      ),
+    ) as Array<{ slug: string }>;
+    expect(registry.map((entry) => entry.slug)).toEqual([
+      "concurrent-alpha",
+      "concurrent-beta",
+    ]);
+  });
+
+  it("never lets a concurrent same-slug failure delete the winning product", async () => {
+    const root = await createRepositoryFixture(
+      JSON.stringify({ dependencies: { "@saasforge/config": "workspace:*" } }),
+    );
+    const input: CreateProductInput = {
+      name: "Concurrent Winner",
+      slug: "concurrent-winner",
+      description:
+        "A same-slug concurrency fixture that must leave one complete winning product.",
+      modules: [],
+    };
+
+    const results = await Promise.allSettled([
+      createProduct(root, input),
+      createProduct(root, input),
+    ]);
+
+    expect(
+      results.filter((result) => result.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(
+      results.filter((result) => result.status === "rejected"),
+    ).toHaveLength(1);
+    await expect(
+      stat(path.join(root, "products", input.slug, "saasforge.manifest.json")),
+    ).resolves.toBeDefined();
+    const registry = JSON.parse(
+      await readFile(
+        path.join(root, "apps", "factory", "src", "generated", "products.json"),
+        "utf8",
+      ),
+    ) as Array<{ slug: string }>;
+    expect(registry.map((entry) => entry.slug)).toEqual([input.slug]);
+    await expect(
+      stat(path.join(root, "products", `.${input.slug}.create.lock`)),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("copies the selected package dependency closure into an independent repository", async () => {

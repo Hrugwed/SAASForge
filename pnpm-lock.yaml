@@ -29,6 +29,9 @@ importers:
       '@saasforge/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@saasforge/forge-cli':
+        specifier: workspace:*
+        version: link:../../tooling/forge-cli
       '@saasforge/ui':
         specifier: workspace:*
         version: link:../../packages/ui

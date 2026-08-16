@@ -29,6 +29,7 @@ tooling/
   forge-cli/        Validated, rollback-safe product generator
 docs/
   architecture.md   Architecture decisions and boundaries
+  control-plane.md  Private product inventory and operator safety model
   billing.md        Stripe sandbox, webhook, and production setup
   database-auth.md  Local and production identity/data setup
   deployment.md     Generated-repository release and operations model
@@ -60,7 +61,7 @@ pnpm test:e2e
 
 `factory:setup` creates only an ignored local environment and never overwrites an existing one. `factory:doctor` validates prerequisites and configuration without printing secret values. Generated repositories provide their own `pnpm product:setup` and `pnpm product:doctor` commands.
 
-The factory contains the control center, design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, structured logs, Sentry wiring, security headers, health/readiness endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
+The factory contains a real control plane that reconciles generated products with their manifests, plus the design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, structured logs, Sentry wiring, security headers, health/readiness endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
 
 ## Security and contribution
 

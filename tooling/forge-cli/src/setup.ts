@@ -41,10 +41,15 @@ export async function setupFactory(
   const generatedSecret =
     options.secret?.() ?? randomBytes(32).toString("base64url");
   const template = await readFile(templatePath, "utf8");
-  const configured = template.replace(
-    /^BETTER_AUTH_SECRET=.*$/m,
-    `BETTER_AUTH_SECRET=${generatedSecret}`,
-  );
+  const configured = template
+    .replace(
+      /^BETTER_AUTH_SECRET=.*$/m,
+      `BETTER_AUTH_SECRET=${generatedSecret}`,
+    )
+    .replace(
+      /^SAASFORGE_LOCAL_OPERATOR_MODE=.*$/m,
+      "SAASFORGE_LOCAL_OPERATOR_MODE=enabled",
+    );
   await mkdir(path.dirname(environmentPath), { recursive: true });
   await writeFile(environmentPath, configured, {
     encoding: "utf8",
