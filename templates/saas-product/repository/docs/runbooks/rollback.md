@@ -14,3 +14,5 @@ Rollback when a release causes material errors, security exposure, incorrect bil
 6. Preserve logs and write a blameless follow-up with corrective actions.
 
 Practice this runbook before launch and at least every six months. Record the deployment IDs, timings, gaps, and owner.
+
+Add the successful exercise to `docs/launch-evidence.json` with the source and restored deployment IDs, operator, duration, UTC completion time, and a non-sensitive HTTPS evidence link.

@@ -1,5 +1,7 @@
 # Factory roadmap
 
+This roadmap records implementation progress, not production-readiness. The canonical G0-G8 status and dated evidence links live in [the production-readiness standard](production-readiness.md); a completed roadmap item does not close a readiness gate.
+
 ## Foundation
 
 - [x] Monorepo, private factory control center, design tokens, configuration validation

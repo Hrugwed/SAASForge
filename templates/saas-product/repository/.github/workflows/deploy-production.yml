@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   release:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
@@ -33,6 +34,11 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - id: release
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - run: pnpm launch:check -- --evidence docs/launch-evidence.json --commit "$GITHUB_SHA" --version "${{ steps.release.outputs.version }}"
       # __DATABASE_DEPLOY_STEP__
       - run: pnpm exec vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
       - run: pnpm exec vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"

@@ -84,7 +84,17 @@ async function createRepositoryFixture(packageJson: string) {
   await mkdir(scripts, { recursive: true });
   await writeFile(
     path.join(scripts, "doctor.mjs"),
-    "console.log('doctor');\n",
+    "import { isSupportedNodeVersion } from './runtime.mjs';\nconsole.log(isSupportedNodeVersion(process.version));\n",
+    "utf8",
+  );
+  await writeFile(
+    path.join(scripts, "runtime.mjs"),
+    "export const isSupportedNodeVersion = () => true;\n",
+    "utf8",
+  );
+  await writeFile(
+    path.join(scripts, "launch-readiness.mjs"),
+    "console.log('launch readiness');\n",
     "utf8",
   );
   const repositoryTemplate = path.join(
@@ -97,6 +107,11 @@ async function createRepositoryFixture(packageJson: string) {
   const runbooks = path.join(repositoryTemplate, "docs", "runbooks");
   await mkdir(workflows, { recursive: true });
   await mkdir(runbooks, { recursive: true });
+  await writeFile(
+    path.join(repositoryTemplate, "docs", "launch-evidence.example.json"),
+    '{"schemaVersion":1}\n',
+    "utf8",
+  );
   await writeFile(
     path.join(repositoryTemplate, "vercel.json"),
     JSON.stringify({
@@ -111,7 +126,7 @@ async function createRepositoryFixture(packageJson: string) {
   );
   await writeFile(
     path.join(workflows, "deploy-production.yml"),
-    "jobs:\n  release:\n    steps:\n      # __DATABASE_DEPLOY_STEP__\n",
+    'jobs:\n  release:\n    steps:\n      - id: release\n        run: echo version=0.1.0 >> "$GITHUB_OUTPUT"\n      - run: pnpm launch:check -- --commit "$GITHUB_SHA" --version "${{ steps.release.outputs.version }}"\n      # __DATABASE_DEPLOY_STEP__\n',
     "utf8",
   );
   await writeFile(path.join(runbooks, "rollback.md"), "# Rollback\n", "utf8");
@@ -234,6 +249,29 @@ describe("product generator input", () => {
     await expect(
       stat(path.join(result.target, "scripts", "doctor.mjs")),
     ).resolves.toBeDefined();
+    await expect(
+      stat(path.join(result.target, "scripts", "runtime.mjs")),
+    ).resolves.toBeDefined();
+    await expect(
+      stat(path.join(result.target, "scripts", "launch-readiness.mjs")),
+    ).resolves.toBeDefined();
+    await expect(
+      stat(path.join(result.target, "docs", "launch-evidence.example.json")),
+    ).resolves.toBeDefined();
+    await expect(
+      readFile(path.join(result.target, "package.json"), "utf8"),
+    ).resolves.toContain('"launch:check": "node scripts/launch-readiness.mjs"');
+    await expect(
+      readFile(
+        path.join(
+          result.target,
+          ".github",
+          "workflows",
+          "deploy-production.yml",
+        ),
+        "utf8",
+      ),
+    ).resolves.toContain('--version "${{ steps.release.outputs.version }}"');
     await expect(
       readFile(path.join(result.target, "vercel.json"), "utf8"),
     ).resolves.toContain("@products/proof-product");

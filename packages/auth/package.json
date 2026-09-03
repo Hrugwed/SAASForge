@@ -11,7 +11,8 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --exclude \"**/*.integration.test.ts\"",
+    "test:integration": "vitest run src/server.integration.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

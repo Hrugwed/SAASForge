@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 async function expectGeneratedPaths(
@@ -33,6 +34,10 @@ test("public landing explains and demonstrates the factory accessibly", async ({
   await expect(
     page.getByRole("link", { name: "Open private factory" }).first(),
   ).toHaveAttribute("href", "/dashboard");
+  const accessibilityScan = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(accessibilityScan.violations).toEqual([]);
 
   const forgeCore = page.getByTestId("forge-core");
   await expect(forgeCore).toHaveAttribute("data-motion", "reduced");

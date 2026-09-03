@@ -8,9 +8,11 @@ Enable Neon point-in-time restore appropriate to the product's recovery objectiv
 
 1. Record the UTC start time, source branch, target restore point, operator, and expected data checks.
 2. Restore into a new isolated Neon branch. Never overwrite production for a drill.
-3. connect a temporary Preview deployment to the restored branch.
+3. Connect a temporary Preview deployment to the restored branch.
 4. Run schema validation, row-count/invariant checks, and the primary browser journey without sending real email or billing events.
 5. Record recovery point, elapsed time, verification evidence, and any gaps.
 6. Delete the temporary deployment and branch only after evidence is retained.
 
 Run a drill before launch and on a regular schedule based on business risk. A configured backup is not considered proven until a restore succeeds.
+
+Record the successful drill in `docs/launch-evidence.json`. `actualRecoveryMinutes` must not exceed the declared `rtoMinutes`, the target must be isolated, and the evidence link must not expose database credentials or customer data.

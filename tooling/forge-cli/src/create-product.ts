@@ -380,6 +380,7 @@ async function writeRepositoryFiles(
       "product:doctor": "node scripts/doctor.mjs",
       "product:changes": "node scripts/managed-files.mjs",
       "product:setup": "node scripts/setup.mjs",
+      "launch:check": "node scripts/launch-readiness.mjs",
       lint: "turbo run lint",
       typecheck: "turbo run typecheck",
       test: "turbo run test",

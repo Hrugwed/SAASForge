@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {
@@ -92,6 +93,10 @@ test("private factory access, module visibility, and dashboard protection", asyn
     page.getByText("Inventory here. Production data there."),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  const dashboardAccessibility = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(dashboardAccessibility.violations).toEqual([]);
 
   await navigateFactory(
     page,
@@ -107,6 +112,21 @@ test("private factory access, module visibility, and dashboard protection", asyn
     page
       .getByText("GENERATOR STANDING BY")
       .or(page.getByRole("region", { name: "Generated products" })),
+  ).toBeVisible();
+  const blueprintComposer = page.getByRole("region", {
+    name: "Product blueprint composer",
+  });
+  await expect(blueprintComposer).toBeVisible();
+  await blueprintComposer.getByLabel("Product name").fill("Launch Ledger");
+  await expect(blueprintComposer.getByLabel("Repository slug")).toHaveValue(
+    "launch-ledger",
+  );
+  await blueprintComposer.getByLabel("Billing").check();
+  await expect(blueprintComposer.getByLabel("Identity")).toBeChecked();
+  await expect(blueprintComposer.getByLabel("Identity")).toBeDisabled();
+  await expect(blueprintComposer.getByText("VALIDATED")).toBeVisible();
+  await expect(
+    blueprintComposer.getByText(/pnpm forge:create -- --blueprint/),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: /create|upgrade|deploy/i }),

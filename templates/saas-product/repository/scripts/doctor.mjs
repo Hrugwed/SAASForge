@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { isSupportedNodeVersion } from "./runtime.mjs";
 
 const root = process.cwd();
 const checks = [];
@@ -39,15 +40,11 @@ function isPlaceholder(value) {
   return !value || /replace|example\.com|change-me|your[-_]/i.test(value);
 }
 
-const [major = 0, minor = 0] = process.version
-  .replace(/^v/, "")
-  .split(".")
-  .map(Number);
-const nodeSupported = major > 22 || (major === 22 && minor >= 14);
+const nodeSupported = isSupportedNodeVersion(process.version);
 add(
   nodeSupported ? "pass" : "fail",
   `Node ${process.version} ${nodeSupported ? "is supported" : "is unsupported"}.`,
-  "Install Node 22.14 or newer.",
+  "Install Node >=22.14.0 <23.",
 );
 
 const pnpm = spawnSync("pnpm", ["--version"], {

@@ -27,6 +27,13 @@ describe("factory setup", () => {
     expect(result.created).toBe(true);
     expect(environment.BETTER_AUTH_SECRET).toBe("a".repeat(43));
     expect(isPlaceholder(environment.BETTER_AUTH_SECRET)).toBe(false);
+    expect(result.next).toEqual([
+      "pnpm factory:doctor",
+      "docker compose up -d",
+      "pnpm db:generate",
+      "pnpm db:deploy",
+      "pnpm dev",
+    ]);
   });
 
   it("never overwrites an existing local environment", async () => {
@@ -46,5 +53,6 @@ describe("factory setup", () => {
     await expect(readFile(result.environmentPath, "utf8")).resolves.toContain(
       "keep-this-secret",
     );
+    expect(result.next).toContain("pnpm db:generate");
   });
 });
