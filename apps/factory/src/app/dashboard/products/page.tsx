@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button, Card, Container } from "@saasforge/ui";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { BlueprintComposer } from "@/components/factory/blueprint-composer";
 import { getControlPlaneSnapshot } from "@/lib/control-plane";
 import "./products.css";
 
@@ -80,6 +81,8 @@ export default async function ProductsPage() {
         </section>
       ) : null}
 
+      <BlueprintComposer />
+
       {snapshot.products.length === 0 ? (
         <section
           aria-labelledby="first-product-title"
@@ -111,14 +114,11 @@ export default async function ProductsPage() {
 
               <div className="product-empty-actions">
                 <Button asChild>
+                  <Link href="#blueprint-composer">Compose blueprint</Link>
+                </Button>
+                <Button asChild variant="secondary">
                   <Link href="/dashboard/modules">Inspect capabilities</Link>
                 </Button>
-                <code>
-                  pnpm forge:create -- --name &quot;Next Product&quot; --slug
-                  &quot;next-product&quot; --description &quot;A validated
-                  customer outcome described clearly.&quot; --modules
-                  &quot;auth&quot;
-                </code>
               </div>
             </div>
 

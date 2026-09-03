@@ -4,12 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./product-blueprint": "./src/product-blueprint.ts",
     "./product-contract": "./src/product-contract.ts"
   },
   "scripts": {
     "create": "tsx src/cli.ts",
     "upgrade": "tsx src/upgrade-cli.ts",
     "doctor": "tsx src/doctor-cli.ts",
+    "reference:create": "tsx src/reference-product-cli.ts",
     "setup": "tsx src/setup-cli.ts",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",

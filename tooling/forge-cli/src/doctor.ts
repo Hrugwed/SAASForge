@@ -1,6 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import net from "node:net";
 import { isPlaceholder, readEnvironment } from "./environment";
 
 export type CheckStatus = "pass" | "warn" | "fail";
@@ -17,6 +18,20 @@ export type DoctorReport = {
   root: string;
   checks: DoctorCheck[];
   ok: boolean;
+};
+
+type MigrationStatus = "current" | "pending" | "error";
+type FactoryPortStatus = "available" | "factory" | "occupied";
+
+type FactoryProbes = {
+  databaseReachable: (url: URL) => Promise<boolean>;
+  dockerAvailable: () => boolean;
+  factoryPortStatus: () => Promise<FactoryPortStatus>;
+  migrationStatus: (root: string, databaseUrl: string) => MigrationStatus;
+};
+
+type DoctorOptions = {
+  factoryProbes?: Partial<FactoryProbes>;
 };
 
 async function exists(target: string): Promise<boolean> {
@@ -40,27 +55,97 @@ function commandWorks(command: string, args: string[]): boolean {
   return result.status === 0;
 }
 
-function nodeVersionCheck(version: string): DoctorCheck {
+function canConnect(hostname: string, port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = net.createConnection({ host: hostname, port });
+    const finish = (connected: boolean) => {
+      socket.destroy();
+      resolve(connected);
+    };
+    socket.setTimeout(1_000);
+    socket.once("connect", () => finish(true));
+    socket.once("error", () => finish(false));
+    socket.once("timeout", () => finish(false));
+  });
+}
+
+async function databaseReachable(url: URL): Promise<boolean> {
+  return canConnect(url.hostname, Number(url.port || "5432"));
+}
+
+function migrationStatus(root: string, databaseUrl: string): MigrationStatus {
+  const result = spawnSync(
+    "pnpm",
+    ["--filter", "@saasforge/database", "exec", "prisma", "migrate", "status"],
+    {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...process.env, DATABASE_URL: databaseUrl },
+      shell: process.platform === "win32",
+      stdio: "pipe",
+      timeout: 20_000,
+    },
+  );
+  if (result.status === 0) return "current";
+  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  return /not yet been applied|pending migration/i.test(output)
+    ? "pending"
+    : "error";
+}
+
+async function factoryPortStatus(): Promise<FactoryPortStatus> {
+  if (!(await canConnect("127.0.0.1", 3000))) return "available";
+  try {
+    const response = await fetch("http://127.0.0.1:3000/api/health", {
+      cache: "no-store",
+      signal: AbortSignal.timeout(2_000),
+    });
+    if (!response.ok) return "occupied";
+    const payload = (await response.json()) as {
+      service?: unknown;
+      status?: unknown;
+    };
+    return payload.status === "ok" && payload.service === "saasforge-factory"
+      ? "factory"
+      : "occupied";
+  } catch {
+    return "occupied";
+  }
+}
+
+const defaultFactoryProbes: FactoryProbes = {
+  databaseReachable,
+  dockerAvailable: () =>
+    commandWorks("docker", ["compose", "version"]) &&
+    commandWorks("docker", ["info"]),
+  factoryPortStatus,
+  migrationStatus,
+};
+
+export function nodeVersionCheck(version: string): DoctorCheck {
   const [major = 0, minor = 0] = version
     .replace(/^v/, "")
     .split(".")
     .map(Number);
-  const supported = major > 22 || (major === 22 && minor >= 14);
+  const supported = major === 22 && minor >= 14;
   return supported
     ? {
         id: "node",
         status: "pass",
-        message: `Node ${version} satisfies >=22.14.`,
+        message: `Node ${version} satisfies >=22.14.0 <23.`,
       }
     : {
         id: "node",
         status: "fail",
         message: `Node ${version} is unsupported.`,
-        remediation: "Install Node 22.14 or newer, then rerun the doctor.",
+        remediation: "Install Node >=22.14.0 <23, then rerun the doctor.",
       };
 }
 
-async function factoryChecks(root: string): Promise<DoctorCheck[]> {
+async function factoryChecks(
+  root: string,
+  probes: FactoryProbes,
+): Promise<DoctorCheck[]> {
   const checks: DoctorCheck[] = [nodeVersionCheck(process.version)];
   checks.push(
     commandWorks("pnpm", ["--version"])
@@ -101,7 +186,32 @@ async function factoryChecks(root: string): Promise<DoctorCheck[]> {
         },
   );
 
+  const generatedClient = path.join(
+    root,
+    "packages",
+    "database",
+    "src",
+    "generated",
+    "prisma",
+    "client.ts",
+  );
+  checks.push(
+    (await exists(generatedClient))
+      ? {
+          id: "database-client",
+          status: "pass",
+          message: "The Prisma database client is generated.",
+        }
+      : {
+          id: "database-client",
+          status: "fail",
+          message: "The Prisma database client is missing.",
+          remediation: "Run pnpm db:generate before starting the factory.",
+        },
+  );
+
   const environmentPath = path.join(root, "apps", "factory", ".env.local");
+  let databaseUrl: string | undefined;
   if (!(await exists(environmentPath))) {
     checks.push({
       id: "environment",
@@ -112,6 +222,7 @@ async function factoryChecks(root: string): Promise<DoctorCheck[]> {
     });
   } else {
     const environment = await readEnvironment(environmentPath);
+    databaseUrl = environment.DATABASE_URL;
     const required = [
       "NEXT_PUBLIC_APP_URL",
       "DATABASE_URL",
@@ -147,19 +258,104 @@ async function factoryChecks(root: string): Promise<DoctorCheck[]> {
     );
   }
 
+  let parsedDatabaseUrl: URL | undefined;
+  if (databaseUrl) {
+    try {
+      parsedDatabaseUrl = new URL(databaseUrl);
+      if (!["postgres:", "postgresql:"].includes(parsedDatabaseUrl.protocol)) {
+        parsedDatabaseUrl = undefined;
+      }
+    } catch {
+      parsedDatabaseUrl = undefined;
+    }
+  }
+
+  const reachable = parsedDatabaseUrl
+    ? await probes.databaseReachable(parsedDatabaseUrl)
+    : false;
   checks.push(
-    commandWorks("docker", ["compose", "version"])
+    reachable
+      ? {
+          id: "database",
+          status: "pass",
+          message: "The configured database endpoint is reachable.",
+        }
+      : {
+          id: "database",
+          status: "fail",
+          message: parsedDatabaseUrl
+            ? "The configured database endpoint is unreachable."
+            : "DATABASE_URL is not a valid PostgreSQL URL.",
+          remediation:
+            "Start the local database or configure a reachable PostgreSQL DATABASE_URL.",
+        },
+  );
+
+  if (reachable && databaseUrl) {
+    const status = probes.migrationStatus(root, databaseUrl);
+    checks.push(
+      status === "current"
+        ? {
+            id: "migrations",
+            status: "pass",
+            message: "All Prisma migrations are applied.",
+          }
+        : {
+            id: "migrations",
+            status: "fail",
+            message:
+              status === "pending"
+                ? "Prisma migrations are pending."
+                : "Prisma migration status could not be verified.",
+            remediation: "Run pnpm db:deploy, then rerun the doctor.",
+          },
+    );
+  } else {
+    checks.push({
+      id: "migrations",
+      status: "fail",
+      message: "Prisma migration status could not be verified.",
+      remediation: "Restore database connectivity, then run pnpm db:deploy.",
+    });
+  }
+
+  const portStatus = await probes.factoryPortStatus();
+  checks.push(
+    portStatus === "available"
+      ? {
+          id: "factory-port",
+          status: "pass",
+          message: "Factory port 3000 is available.",
+        }
+      : portStatus === "factory"
+        ? {
+            id: "factory-port",
+            status: "pass",
+            message: "SaaSForge Factory is already serving on port 3000.",
+          }
+        : {
+            id: "factory-port",
+            status: "fail",
+            message: "Port 3000 is occupied by another service.",
+            remediation:
+              "Stop the other service or free port 3000 before starting the factory.",
+          },
+  );
+
+  checks.push(
+    probes.dockerAvailable()
       ? {
           id: "docker",
           status: "pass",
-          message: "Docker Compose is available.",
+          message: "Docker Compose and its daemon are available.",
         }
       : {
           id: "docker",
           status: "warn",
-          message: "Docker Compose is unavailable.",
-          remediation:
-            "Install Docker Desktop or configure an external PostgreSQL DATABASE_URL.",
+          message: "Docker Compose or its daemon is unavailable.",
+          remediation: reachable
+            ? "No action is required while the configured database remains reachable."
+            : "Install Docker Desktop or configure an external PostgreSQL DATABASE_URL.",
         },
   );
   return checks;
@@ -238,7 +434,10 @@ async function productChecks(root: string): Promise<DoctorCheck[]> {
   return checks;
 }
 
-export async function runDoctor(root: string): Promise<DoctorReport> {
+export async function runDoctor(
+  root: string,
+  options: DoctorOptions = {},
+): Promise<DoctorReport> {
   const resolvedRoot = path.resolve(root);
   const mode = (await exists(
     path.join(resolvedRoot, "saasforge.manifest.json"),
@@ -247,7 +446,10 @@ export async function runDoctor(root: string): Promise<DoctorReport> {
     : "factory";
   const checks =
     mode === "factory"
-      ? await factoryChecks(resolvedRoot)
+      ? await factoryChecks(resolvedRoot, {
+          ...defaultFactoryProbes,
+          ...options.factoryProbes,
+        })
       : await productChecks(resolvedRoot);
   return {
     mode,

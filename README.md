@@ -44,22 +44,32 @@ docs/
 ## Commands
 
 ```bash
+npm run factory:bootstrap
+```
+
+The bootstrap command installs the pinned dependencies, creates safe local configuration, generates Prisma, starts or checks PostgreSQL, deploys migrations, starts the loopback-only factory, and verifies `http://127.0.0.1:3000/api/health`. It uses Docker Compose when available and otherwise falls back to Prisma's local development database. Press `Ctrl+C` to stop the attached factory server.
+
+The equivalent granular commands are:
+
+```bash
 pnpm install
 pnpm factory:setup
 pnpm factory:doctor
 docker compose up -d
+pnpm db:generate
 pnpm db:migrate
 pnpm forge:create -- --name "My Product" --slug "my-product" --description "A clear customer outcome described here." --modules "auth,billing,email,analytics,jobs,storage"
 pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:integration
 pnpm license:check
 pnpm build
 pnpm test:e2e
 ```
 
-`factory:setup` creates only an ignored local environment and never overwrites an existing one. `factory:doctor` validates prerequisites and configuration without printing secret values. Generated repositories provide their own `pnpm product:setup` and `pnpm product:doctor` commands.
+`factory:setup` creates only an ignored local environment and never overwrites an existing one. `factory:doctor` validates prerequisites, configuration, generated Prisma artifacts, database connectivity, migration status, and factory port ownership without printing secret values. Generated repositories provide their own `pnpm product:setup` and `pnpm product:doctor` commands.
 
 The factory contains a real control plane that reconciles generated products with their manifests, plus the design system, validated configuration, PostgreSQL/Prisma data layer, Better Auth identity, organization tenancy, reusable Stripe billing engine, email and analytics boundaries, structured logs, Sentry wiring, security headers, health/readiness endpoints, and automated quality pipeline. Customer-facing pricing, design, provider credentials, database, domain, and deployment belong to each generated product.
 

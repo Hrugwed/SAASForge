@@ -1,0 +1,96 @@
+name: Reference products
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reference-products-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: ${{ matrix.profile }} standalone
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: lean
+            database: reference_lean
+            databaseEnabled: false
+          - profile: full
+            database: reference_full
+            databaseEnabled: true
+    env:
+      APP_ENV: test
+      AUTH_EMAIL_MODE: local
+      AUTH_REQUIRE_EMAIL_VERIFICATION: false
+      BETTER_AUTH_SECRET: ci-only-secret-that-is-longer-than-32-characters
+      BETTER_AUTH_URL: http://127.0.0.1:3410
+      DATABASE_URL: postgresql://reference:reference@127.0.0.1:5432/${{ matrix.database }}
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3410
+      PRODUCT_PATH: ${{ runner.temp }}/saasforge-reference-${{ matrix.profile }}
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: ${{ matrix.database }}
+          POSTGRES_USER: reference
+          POSTGRES_PASSWORD: reference
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U reference -d ${{ matrix.database }}"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@f520eceda224fe1a4aed5a2a27a194379a409996 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install factory dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate standalone reference
+        run: pnpm --filter @saasforge/forge-cli reference:create -- --profile "${{ matrix.profile }}" --output "$PRODUCT_PATH"
+      - name: Resolve independent lockfile
+        working-directory: ${{ env.PRODUCT_PATH }}
+        run: pnpm install --no-frozen-lockfile
+      - name: Prove frozen reinstall
+        working-directory: ${{ env.PRODUCT_PATH }}
+        run: pnpm install --frozen-lockfile
+      - name: Create safe local configuration
+        working-directory: ${{ env.PRODUCT_PATH }}
+        run: pnpm product:setup
+      - name: Diagnose generated product
+        working-directory: ${{ env.PRODUCT_PATH }}
+        run: pnpm product:doctor
+      - name: Deploy isolated schema
+        if: matrix.databaseEnabled
+        working-directory: ${{ env.PRODUCT_PATH }}
+        run: pnpm db:validate && pnpm db:generate && pnpm db:deploy
+      - name: Run database integration suites
+        if: matrix.databaseEnabled
+        working-directory: ${{ env.PRODUCT_PATH }}
+        env:
+          REQUIRE_DATABASE_INTEGRATION: "1"
+        run: pnpm --filter @saasforge/auth --filter @saasforge/billing run test:integration
+      - name: Verify generated repository
+        working-directory: ${{ env.PRODUCT_PATH }}
+        run: pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm license:check && pnpm build
+      - name: Install browser
+        working-directory: ${{ env.PRODUCT_PATH }}
+        run: pnpm --filter @products/reference-${{ matrix.profile }} exec playwright install --with-deps chromium
+      - name: Run local-adapter browser journeys
+        working-directory: ${{ env.PRODUCT_PATH }}
+        run: pnpm test:e2e

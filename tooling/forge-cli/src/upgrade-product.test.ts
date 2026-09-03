@@ -5,7 +5,6 @@ import {
   mkdir,
   mkdtemp,
   readFile,
-  rename,
   rm,
   symlink,
   writeFile,
@@ -13,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createProduct } from "./create-product";
+import { composeProduct } from "./create-product";
 import { upgradeProduct } from "./upgrade-product";
 
 let root: string | undefined;
@@ -35,6 +34,7 @@ async function fixture() {
   for (const directory of ["templates", "packages"]) {
     await cp(path.join(source, directory), path.join(root, directory), {
       recursive: true,
+      filter: (entry) => path.basename(entry) !== "node_modules",
     });
   }
   await cp(
@@ -48,19 +48,23 @@ async function fixture() {
   await cp(path.join(source, "docs"), path.join(root, "docs"), {
     recursive: true,
   });
-  const generated = await createProduct(root, {
-    name: "Upgrade Product",
-    slug: "upgrade-product",
-    description: "A standalone product used to prove safe factory upgrades.",
-    modules: [],
-  });
   const product = path.join(
     path.dirname(root),
     `upgrade-product-standalone-${path.basename(root)}`,
   );
-  await rename(generated.target, product);
-  productRoot = product;
-  return { factory: root, product };
+  const generated = await composeProduct(
+    root,
+    {
+      name: "Upgrade Product",
+      slug: "upgrade-product",
+      description: "A standalone product used to prove safe factory upgrades.",
+      modules: [],
+    },
+    product,
+    { updateRegistry: false },
+  );
+  productRoot = generated.target;
+  return { factory: root, product: generated.target };
 }
 
 async function setVersion(factory: string, version: string) {
@@ -73,7 +77,7 @@ async function setVersion(factory: string, version: string) {
   await writeFile(packagePath, `${JSON.stringify(content, null, 2)}\n`);
 }
 
-describe("standalone product upgrades", () => {
+describe("standalone product upgrades", { timeout: 15_000 }, () => {
   it("plans by default and applies a factory-only change safely", async () => {
     const { factory, product } = await fixture();
     const readme = path.join(

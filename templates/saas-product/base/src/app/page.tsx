@@ -4,6 +4,9 @@ import { enabledModules, productConfig } from "@/lib/product-config";
 export default function HomePage() {
   return (
     <main className="product-shell">
+      <a className="skip-link" href="#workflow">
+        Skip to content
+      </a>
       <nav className="product-nav" aria-label="Primary navigation">
         <Link className="wordmark" href="/">
           {productConfig.name}

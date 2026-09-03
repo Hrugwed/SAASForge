@@ -33,6 +33,7 @@ export async function setupFactory(
       next: [
         "pnpm factory:doctor",
         "docker compose up -d",
+        "pnpm db:generate",
         "pnpm db:deploy",
         "pnpm dev",
       ],
@@ -61,6 +62,7 @@ export async function setupFactory(
     next: [
       "pnpm factory:doctor",
       "docker compose up -d",
+      "pnpm db:generate",
       "pnpm db:deploy",
       "pnpm dev",
     ],

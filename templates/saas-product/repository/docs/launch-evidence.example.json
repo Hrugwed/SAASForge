@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "release": {
+    "version": "replace-with-release-version",
+    "commit": "replace-with-commit-sha",
+    "owner": "replace-with-release-owner",
+    "reviewedAt": "replace-with-utc-date",
+    "evidenceUrl": "https://replace-with-release-record"
+  },
+  "automated": {
+    "quality": {
+      "status": "blocked",
+      "commit": "replace-with-commit-sha",
+      "version": "replace-with-release-version",
+      "completedAt": "replace-with-utc-date",
+      "evidenceUrl": "https://replace-with-quality-run"
+    },
+    "security": {
+      "status": "blocked",
+      "commit": "replace-with-commit-sha",
+      "version": "replace-with-release-version",
+      "completedAt": "replace-with-utc-date",
+      "evidenceUrl": "https://replace-with-security-run"
+    },
+    "accessibility": {
+      "status": "blocked",
+      "commit": "replace-with-commit-sha",
+      "version": "replace-with-release-version",
+      "standard": "WCAG 2.1 AA",
+      "seriousOrCriticalViolations": -1,
+      "keyboardJourney": false,
+      "completedAt": "replace-with-utc-date",
+      "evidenceUrl": "https://replace-with-accessibility-run"
+    },
+    "performance": {
+      "status": "blocked",
+      "commit": "replace-with-commit-sha",
+      "version": "replace-with-release-version",
+      "concurrentRequests": 20,
+      "p95Milliseconds": -1,
+      "budgetP95Milliseconds": 1000,
+      "completedAt": "replace-with-utc-date",
+      "evidenceUrl": "https://replace-with-performance-run"
+    }
+  },
+  "restore": {
+    "status": "blocked",
+    "commit": "replace-with-commit-sha",
+    "version": "replace-with-release-version",
+    "operator": "replace-with-operator",
+    "isolatedTarget": "replace-with-isolated-restore-target",
+    "rpoMinutes": -1,
+    "rtoMinutes": -1,
+    "actualRecoveryMinutes": -1,
+    "completedAt": "replace-with-utc-date",
+    "evidenceUrl": "https://replace-with-restore-record"
+  },
+  "rollback": {
+    "status": "blocked",
+    "commit": "replace-with-commit-sha",
+    "version": "replace-with-release-version",
+    "operator": "replace-with-operator",
+    "fromDeployment": "replace-with-source-deployment",
+    "toDeployment": "replace-with-restored-deployment",
+    "durationMinutes": -1,
+    "completedAt": "replace-with-utc-date",
+    "evidenceUrl": "https://replace-with-rollback-record"
+  },
+  "alerts": []
+}

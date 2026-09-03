@@ -26,9 +26,25 @@ Environment changes affect only new Vercel deployments. Trigger a new Preview or
 
 1. Merge a reviewed pull request only after Quality and Security pass.
 2. Verify the Preview deployment and `/api/ready` response.
-3. Run **Deploy production** from GitHub Actions against the `main` commit.
-4. Confirm `/api/health`, `/api/ready`, the primary browser journey, error rate, and provider dashboards.
-5. Record the release, migration, operator, and verification links in the change log or release ticket.
+3. Copy `docs/launch-evidence.example.json` to `docs/launch-evidence.json`, replace every placeholder with dated evidence, and run the launch check for your shell.
+
+   POSIX:
+
+   ```sh
+   pnpm launch:check -- --evidence docs/launch-evidence.json --commit "$(git rev-parse HEAD)" --version "$(node -p "require('./package.json').version")"
+   ```
+
+   PowerShell:
+
+   ```powershell
+   $commit = git rev-parse HEAD
+   $version = node -p "require('./package.json').version"
+   pnpm launch:check -- --evidence docs/launch-evidence.json --commit $commit --version $version
+   ```
+
+4. Run **Deploy production** from GitHub Actions against the `main` commit. The workflow reruns `launch:check` before migrations or deployment.
+5. Confirm `/api/health`, `/api/ready`, the primary browser journey, error rate, and provider dashboards.
+6. Record the release, migration, operator, and verification links in the change log or release ticket.
 
 Database migrations must be backward-compatible with the currently running application. Use expand/migrate/contract changes: add compatible structures, deploy code that supports both shapes, backfill, then remove old structures in a later release.
 
@@ -39,3 +55,5 @@ Database migrations must be backward-compatible with the currently running appli
 - A Neon backup/restore drill with date and operator.
 - Tested rollback and incident runbooks.
 - Alert ownership for uptime, errors, latency, billing drift, email failures, and job backlog.
+
+The release and every quality, security, accessibility, performance, restore, and rollback record must identify the exact 40-character commit and package version passed to `launch:check`, use HTTPS evidence links, and remain within the freshness windows enforced by the command. Do not commit credentials, provider payloads, customer data, or private incident details in the record.

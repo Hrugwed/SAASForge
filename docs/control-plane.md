@@ -18,6 +18,8 @@ The registry is dynamically read rather than statically imported, so a successfu
 
 The control plane does not return absolute host paths, environment values, secrets, managed-file hashes, customer data, or raw provider payloads. It does not execute product code, migrations, deployment, setup, doctor, or upgrade commands through HTTP. Operator commands are derived from a validated slug, shown only after manifest and artifact verification, and are copy-only.
 
+The product blueprint composer is also read-only. It validates drafts in the browser against the generator's shared schema, resolves capability dependencies, previews the standalone package closure, and exports JSON or a shell-safe encoded CLI command. It has no server action, route handler, registry mutation, filesystem access, or command-execution path.
+
 Manifest agreement proves product provenance and expected structure. It is not runtime health, deployment evidence, provider connectivity, compliance, or production approval.
 
 ## Access policy

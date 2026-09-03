@@ -467,36 +467,60 @@ export class StripeBillingService {
         "Stripe subscription does not contain a customer.",
       );
     }
+    const providerEventCreatedAt = unixDate(event.created);
+    if (!providerEventCreatedAt) {
+      throw new BillingConfigurationError(
+        "Stripe event does not contain a creation timestamp.",
+      );
+    }
 
     await this.options.database.$transaction(async (transaction) => {
-      const subscription = await transaction.subscription.upsert({
+      const current = await transaction.subscription.findUnique({
         where: { providerSubscriptionId: stripeSubscription.id },
-        create: {
-          organizationId,
-          provider: "STRIPE",
-          providerCustomerId: customerId,
-          providerSubscriptionId: stripeSubscription.id,
-          planKey: resolved.plan?.key,
-          priceId,
-          status,
-          currentPeriodStart,
-          currentPeriodEnd,
-          cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-          providerEventCreatedAt: unixDate(event.created),
-          lastSyncedAt: new Date(),
-        },
-        update: {
-          providerCustomerId: customerId,
-          planKey: resolved.plan?.key,
-          priceId,
-          status,
-          currentPeriodStart,
-          currentPeriodEnd,
-          cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-          providerEventCreatedAt: unixDate(event.created),
-          lastSyncedAt: new Date(),
-        },
       });
+      let subscription;
+
+      if (current) {
+        const updated = await transaction.subscription.updateMany({
+          where: {
+            id: current.id,
+            OR: [
+              { providerEventCreatedAt: null },
+              { providerEventCreatedAt: { lte: providerEventCreatedAt } },
+            ],
+          },
+          data: {
+            providerCustomerId: customerId,
+            planKey: resolved.plan?.key,
+            priceId,
+            status,
+            currentPeriodStart,
+            currentPeriodEnd,
+            cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+            providerEventCreatedAt,
+            lastSyncedAt: new Date(),
+          },
+        });
+        if (updated.count === 0) return;
+        subscription = { ...current, id: current.id };
+      } else {
+        subscription = await transaction.subscription.create({
+          data: {
+            organizationId,
+            provider: "STRIPE",
+            providerCustomerId: customerId,
+            providerSubscriptionId: stripeSubscription.id,
+            planKey: resolved.plan?.key,
+            priceId,
+            status,
+            currentPeriodStart,
+            currentPeriodEnd,
+            cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+            providerEventCreatedAt,
+            lastSyncedAt: new Date(),
+          },
+        });
+      }
 
       await transaction.entitlement.updateMany({
         where: { organizationId },
